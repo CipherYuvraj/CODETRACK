@@ -186,4 +186,59 @@ router.get('/:username', async (req, res) => {
   }
 });
 
+/**
+ * DELETE /api/questions/:questionId
+ *
+ * What it does:
+ * - Deletes a question from the logged-in user's questions
+ * - Validates ownership (only user's own questions can be deleted)
+ */
+router.delete('/:questionId', async (req, res) => {
+  try {
+    const { questionId } = req.params;
+    const username = req.user.username;
+
+    const data = await readData();
+    const userIndex = data.users.findIndex(u => u.username === username);
+
+    if (userIndex === -1) {
+      return res.status(404).json({
+        success: false,
+        message: `User "${username}" not found!`
+      });
+    }
+
+    const user = data.users[userIndex];
+    const questionIndex = user.questions.findIndex(q => q.id === parseInt(questionId));
+
+    if (questionIndex === -1) {
+      return res.status(404).json({
+        success: false,
+        message: `Question not found!`
+      });
+    }
+
+    // Remove the question
+    const deletedQuestion = user.questions.splice(questionIndex, 1);
+
+    // Save to file
+    await writeData(data);
+
+    console.log(`✅ Question deleted: "${deletedQuestion[0].name}" for ${username}`);
+    res.json({
+      success: true,
+      message: 'Question deleted successfully!',
+      deletedQuestion: deletedQuestion[0]
+    });
+
+  } catch (error) {
+    console.error('❌ Error deleting question:', error.message);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete question',
+      error: error.message
+    });
+  }
+});
+
 module.exports = router;

@@ -1,4 +1,5 @@
 const express = require("express");
+const path = require("path");
 const questionRoutes = require("./routes/questions");
 const statsRoutes = require("./routes/stats");
 const bookmarkRoutes = require("./routes/bookmarks");
@@ -19,16 +20,19 @@ app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE, OPTIONS");
   res.header("Access-Control-Allow-Headers", "Content-Type");
-  
+
   // Handle preflight requests
   if (req.method === "OPTIONS") {
     return res.sendStatus(200);
   }
-  
+
   next();
 });
 
-// Routes
+// Serve static files (CSS, JS, images) from the root directory
+app.use(express.static(path.join(__dirname, '..')));
+
+// API Routes
 app.use("/api", questionRoutes);
 app.use("/api", statsRoutes);
 app.use("/api", bookmarkRoutes);
@@ -37,9 +41,9 @@ app.use("/api/user", userRoutes);  // NEW: User routes with JSON storage
 app.use("/api/questions", questionRoutes2);  // NEW: Question routes with JSON
 app.use("/api/revision", revisionRoutes);  // NEW: Revision routes with JSON
 
-// Health check (to test if server is running)
+// Serve the main dashboard at root URL
 app.get("/", (req, res) => {
-  res.json({ message: "CodeTrack API is running!" });
+  res.sendFile(path.join(__dirname, '..', 'dashboard-modern.html'));
 });
 
 // Start server

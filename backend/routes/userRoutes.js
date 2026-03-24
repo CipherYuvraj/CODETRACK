@@ -89,10 +89,20 @@ router.post('/', async (req, res) => {
  *
  * What it does:
  * - Gets a specific user's data
+ * - REQUIRES: Valid JWT token matching the requested username
  */
 router.get('/:username', async (req, res) => {
   try {
     const { username } = req.params;
+    const requestingUser = req.user.username;  // From authMiddleware
+
+    // Security check: User can only access their own data
+    if (requestingUser !== username) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. You can only access your own data!'
+      });
+    }
 
     // Read data
     const data = await readData();
@@ -107,9 +117,16 @@ router.get('/:username', async (req, res) => {
       });
     }
 
+    // Don't return password
+    const userWithoutPassword = {
+      username: user.username,
+      questions: user.questions,
+      createdAt: user.createdAt
+    };
+
     res.json({
       success: true,
-      data: user
+      data: userWithoutPassword
     });
 
   } catch (error) {

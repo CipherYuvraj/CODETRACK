@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login — CodeTrack</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --glass-bg: rgba(15, 17, 26, 0.75);
+      --glass-border: rgba(255, 255, 255, 0.06);
+      --accent: #4ade80;
+      --accent-dim: rgba(74, 222, 128, 0.15);
+      --accent-glow: rgba(74, 222, 128, 0.35);
+      --text-primary: #f0f4ff;
+      --text-muted: #6b7a99;
+      --error: #f87171;
+      --error-bg: rgba(248, 113, 113, 0.08);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Syne', sans-serif;
+      background: #060811;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Animated mesh background */
+    .bg-mesh {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(100px);
+      opacity: 0.25;
+      animation: drift 12s ease-in-out infinite alternate;
+    }
+
+    .orb-1 {
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, #1a5c3a, transparent);
+      top: -100px; left: -100px;
+      animation-delay: 0s;
+    }
+
+    .orb-2 {
+      width: 400px; height: 400px;
+      background: radial-gradient(circle, #1e3a5f, transparent);
+      bottom: -100px; right: -50px;
+      animation-delay: -4s;
+    }
+
+    .orb-3 {
+      width: 300px; height: 300px;
+      background: radial-gradient(circle, #2d1b5e, transparent);
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      animation-delay: -8s;
+    }
+
+    @keyframes drift {
+      0%   { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(30px, 40px) scale(1.1); }
+    }
+
+    /* Grid dots overlay */
+    .grid-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      background-image: radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px);
+      background-size: 28px 28px;
+    }
+
+    /* Card */
+    .card {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      max-width: 420px;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      padding: 44px 40px;
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      box-shadow:
+        0 0 0 1px rgba(74, 222, 128, 0.04),
+        0 32px 80px rgba(0, 0, 0, 0.6),
+        inset 0 1px 0 rgba(255,255,255,0.04);
+      animation: slideUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(28px) scale(0.98); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    /* Top badge */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--accent-dim);
+      border: 1px solid rgba(74, 222, 128, 0.2);
+      color: var(--accent);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      padding: 4px 10px;
+      border-radius: 20px;
+      margin-bottom: 20px;
+    }
+
+    .badge-dot {
+      width: 6px; height: 6px;
+      background: var(--accent);
+      border-radius: 50%;
+      animation: pulse 1.6s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.4; transform: scale(0.8); }
+    }
+
+    /* Typography */
+    .card-title {
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--text-primary);
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin-bottom: 6px;
+    }
+
+    .card-subtitle {
+      font-size: 13px;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+      margin-bottom: 32px;
+    }
+
+    /* Divider */
+    .divider {
+      height: 1px;
+      background: linear-gradient(to right, transparent, rgba(255,255,255,0.06), transparent);
+      margin-bottom: 28px;
+    }
+
+    /* Input Group */
+    .input-group {
+      margin-bottom: 18px;
+    }
+
+    .input-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+      margin-bottom: 8px;
+    }
+
+    .input-label .label-icon {
+      font-size: 13px;
+    }
+
+    .input-wrapper {
+      position: relative;
+    }
+
+    .input-field {
+      width: 100%;
+      padding: 13px 16px 13px 42px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 10px;
+      font-size: 14px;
+      color: var(--text-primary);
+      font-family: 'JetBrains Mono', monospace;
+      transition: all 0.25s ease;
+      outline: none;
+    }
+
+    .input-field::placeholder {
+      color: rgba(107, 122, 153, 0.5);
+      font-size: 13px;
+    }
+
+    .input-field:focus {
+      border-color: rgba(74, 222, 128, 0.4);
+      background: rgba(74, 222, 128, 0.03);
+      box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.08);
+    }
+
+    .input-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      font-size: 15px;
+      pointer-events: none;
+      transition: color 0.25s;
+    }
+
+    .input-wrapper:focus-within .input-icon {
+      color: var(--accent);
+    }
+
+    /* Eye toggle */
+    .eye-toggle {
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-muted);
+      font-size: 16px;
+      padding: 0;
+      width: auto;
+      margin: 0;
+      transition: color 0.2s;
+    }
+
+    .eye-toggle:hover { color: var(--accent); }
+
+    /* Messages */
+    .error-msg {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      background: var(--error-bg);
+      border: 1px solid rgba(248, 113, 113, 0.2);
+      color: var(--error);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 13px;
+      font-family: 'JetBrains Mono', monospace;
+      margin-bottom: 18px;
+      animation: fadeIn 0.2s ease;
+    }
+
+    .error-msg.show { display: flex; }
+
+    .success-msg {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      background: rgba(74, 222, 128, 0.07);
+      border: 1px solid rgba(74, 222, 128, 0.2);
+      color: var(--accent);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 13px;
+      font-family: 'JetBrains Mono', monospace;
+      margin-bottom: 18px;
+      animation: fadeIn 0.2s ease;
+    }
+
+    .success-msg.show { display: flex; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-4px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Submit Button */
+    .submit-btn {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+      color: #030a05;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      font-family: 'Syne', sans-serif;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      position: relative;
+      overflow: hidden;
+      margin-top: 6px;
+    }
+
+    .submit-btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 60%);
+      opacity: 0;
+      transition: opacity 0.25s;
+    }
+
+    .submit-btn:hover:not(:disabled)::before { opacity: 1; }
+
+    .submit-btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 32px rgba(34, 197, 94, 0.35);
+    }
+
+    .submit-btn:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    .submit-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .submit-btn.loading .btn-text { visibility: hidden; }
+
+    .btn-spinner {
+      display: none;
+      position: absolute;
+      left: 50%; top: 50%;
+      transform: translate(-50%, -50%);
+      width: 18px; height: 18px;
+      border: 2px solid rgba(3, 10, 5, 0.3);
+      border-top-color: #030a05;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    .submit-btn.loading .btn-spinner { display: block; }
+
+    @keyframes spin { to { transform: translate(-50%, -50%) rotate(360deg); } }
+
+    /* Footer link */
+    .card-footer {
+      text-align: center;
+      margin-top: 24px;
+      font-size: 13px;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .card-footer a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.2s;
+      border-bottom: 1px solid transparent;
+    }
+
+    .card-footer a:hover {
+      border-bottom-color: var(--accent);
+    }
+
+    /* Accent corner lines */
+    .corner {
+      position: absolute;
+      width: 20px; height: 20px;
+      pointer-events: none;
+      opacity: 0.4;
+    }
+
+    .corner-tl { top: 14px; left: 14px; border-top: 1.5px solid var(--accent); border-left: 1.5px solid var(--accent); border-radius: 3px 0 0 0; }
+    .corner-tr { top: 14px; right: 14px; border-top: 1.5px solid var(--accent); border-right: 1.5px solid var(--accent); border-radius: 0 3px 0 0; }
+    .corner-bl { bottom: 14px; left: 14px; border-bottom: 1.5px solid var(--accent); border-left: 1.5px solid var(--accent); border-radius: 0 0 0 3px; }
+    .corner-br { bottom: 14px; right: 14px; border-bottom: 1.5px solid var(--accent); border-right: 1.5px solid var(--accent); border-radius: 0 0 3px 0; }
+  </style>
+</head>
+<body>
+
+  <!-- Background -->
+  <div class="bg-mesh">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+  <div class="grid-overlay"></div>
+
+  <!-- Card -->
+  <div class="card">
+    <!-- Corner accents -->
+    <div class="corner corner-tl"></div>
+    <div class="corner corner-tr"></div>
+    <div class="corner corner-bl"></div>
+    <div class="corner corner-br"></div>
+
+    <!-- Header -->
+    <div class="mb-0">
+      <div class="badge">
+        <span class="badge-dot"></span>
+        CODETRACK v2.0
+      </div>
+      <h1 class="card-title">Welcome back,<br/>developer.</h1>
+      <p class="card-subtitle">// sign in to your workspace</p>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Form -->
+    <form id="loginForm" onsubmit="handleLogin(event)" novalidate>
+
+      <!-- Username -->
+      <div class="input-group">
+        <div class="input-label">
+          <span class="label-icon">◈</span> Username
+        </div>
+        <div class="input-wrapper">
+          <span class="input-icon">⌘</span>
+          <input
+            class="input-field"
+            type="text"
+            id="username"
+            name="username"
+            placeholder="your_username"
+            autocomplete="username"
+            disabled
+          />
+        </div>
+      </div>
+
+      <!-- Password -->
+      <div class="input-group">
+        <div class="input-label">
+          <span class="label-icon">◈</span> Password
+        </div>
+        <div class="input-wrapper">
+          <span class="input-icon">⚿</span>
+          <input
+            class="input-field"
+            type="password"
+            id="password"
+            name="password"
+            placeholder="••••••••••••"
+            autocomplete="current-password"
+            style="padding-right: 42px;"
+            disabled
+          />
+          <button type="button" class="eye-toggle" id="eyeToggle" onclick="togglePassword()" title="Toggle password visibility">
+            👁
+          </button>
+        </div>
+      </div>
+
+      <!-- Messages -->
+      <div id="errorMessage" class="error-msg">
+        <span>⚠</span>
+        <span id="errorText"></span>
+      </div>
+      <div id="successMessage" class="success-msg">
+        <span>✓</span>
+        <span id="successText"></span>
+      </div>
+
+      <!-- Submit -->
+      <button type="submit" id="loginBtn" class="submit-btn" disabled>
+        <span class="btn-text">Sign In →</span>
+        <div class="btn-spinner"></div>
+      </button>
+
+    </form>
+
+    <!-- Footer -->
+    <div class="card-footer">
+      No account? <a href="register.html">Create one →</a>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE_URL =
+      window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        ? 'http://localhost:5000/api'
+        : '/api';
+
+    // Enable form on load
+    window.addEventListener('load', () => {
+      document.getElementById('username').disabled = false;
+      document.getElementById('password').disabled = false;
+      document.getElementById('loginBtn').disabled = false;
+    });
+
+    function togglePassword() {
+      const pwd = document.getElementById('password');
+      const btn = document.getElementById('eyeToggle');
+      if (pwd.type === 'password') {
+        pwd.type = 'text';
+        btn.textContent = '🙈';
+      } else {
+        pwd.type = 'password';
+        btn.textContent = '👁';
+      }
+    }
+
+    function showError(msg) {
+      const el = document.getElementById('errorMessage');
+      document.getElementById('errorText').textContent = msg;
+      el.classList.add('show');
+      document.getElementById('successMessage').classList.remove('show');
+    }
+
+    function showSuccess(msg) {
+      const el = document.getElementById('successMessage');
+      document.getElementById('successText').textContent = msg;
+      el.classList.add('show');
+      document.getElementById('errorMessage').classList.remove('show');
+    }
+
+    function clearMessages() {
+      document.getElementById('errorMessage').classList.remove('show');
+      document.getElementById('successMessage').classList.remove('show');
+    }
+
+    async function handleLogin(event) {
+      event.preventDefault();
+
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+      const loginBtn = document.getElementById('loginBtn');
+
+      clearMessages();
+
+      // Validation
+      if (!username || !password) {
+        showError('Please enter both username and password.');
+        return;
+      }
+      if (username.length < 3) {
+        showError('Username must be at least 3 characters.');
+        return;
+      }
+      if (password.length < 6) {
+        showError('Password must be at least 6 characters.');
+        return;
+      }
+
+      try {
+        loginBtn.classList.add('loading');
+        loginBtn.disabled = true;
+
+        const response = await fetch(`${API_BASE_URL}/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) throw new Error(data.message || 'Login failed');
+
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('username', data.username);
+
+        showSuccess('Login successful! Redirecting...');
+
+        setTimeout(() => {
+          window.location.href = 'dashboard-modern.html?redirect=true';
+        }, 1000);
+
+      } catch (error) {
+        showError(error.message);
+        loginBtn.classList.remove('loading');
+        loginBtn.disabled = false;
+      }
+    }
+  </script>
+</body>
+</html>

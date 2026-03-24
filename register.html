@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Register — CodeTrack</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --glass-bg: rgba(15, 17, 26, 0.75);
+      --glass-border: rgba(255, 255, 255, 0.06);
+      --accent: #4ade80;
+      --accent-dim: rgba(74, 222, 128, 0.15);
+      --accent-glow: rgba(74, 222, 128, 0.35);
+      --text-primary: #f0f4ff;
+      --text-muted: #6b7a99;
+      --error: #f87171;
+      --error-bg: rgba(248, 113, 113, 0.08);
+      --warn: #fbbf24;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Syne', sans-serif;
+      background: #060811;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 20px;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* Animated mesh background */
+    .bg-mesh {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(100px);
+      opacity: 0.25;
+      animation: drift 12s ease-in-out infinite alternate;
+    }
+
+    .orb-1 {
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, #1a5c3a, transparent);
+      top: -100px; left: -100px;
+      animation-delay: 0s;
+    }
+
+    .orb-2 {
+      width: 400px; height: 400px;
+      background: radial-gradient(circle, #1e3a5f, transparent);
+      bottom: -100px; right: -50px;
+      animation-delay: -4s;
+    }
+
+    .orb-3 {
+      width: 300px; height: 300px;
+      background: radial-gradient(circle, #2d1b5e, transparent);
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      animation-delay: -8s;
+    }
+
+    @keyframes drift {
+      0%   { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(30px, 40px) scale(1.1); }
+    }
+
+    .grid-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      background-image: radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px);
+      background-size: 28px 28px;
+    }
+
+    /* Card */
+    .card {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      max-width: 440px;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      padding: 40px 40px 36px;
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      box-shadow:
+        0 0 0 1px rgba(74, 222, 128, 0.04),
+        0 32px 80px rgba(0, 0, 0, 0.6),
+        inset 0 1px 0 rgba(255,255,255,0.04);
+      animation: slideUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(28px) scale(0.98); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    /* Corner accents */
+    .corner {
+      position: absolute;
+      width: 20px; height: 20px;
+      pointer-events: none;
+      opacity: 0.4;
+    }
+    .corner-tl { top: 14px; left: 14px; border-top: 1.5px solid var(--accent); border-left: 1.5px solid var(--accent); border-radius: 3px 0 0 0; }
+    .corner-tr { top: 14px; right: 14px; border-top: 1.5px solid var(--accent); border-right: 1.5px solid var(--accent); border-radius: 0 3px 0 0; }
+    .corner-bl { bottom: 14px; left: 14px; border-bottom: 1.5px solid var(--accent); border-left: 1.5px solid var(--accent); border-radius: 0 0 0 3px; }
+    .corner-br { bottom: 14px; right: 14px; border-bottom: 1.5px solid var(--accent); border-right: 1.5px solid var(--accent); border-radius: 0 0 3px 0; }
+
+    /* Badge */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--accent-dim);
+      border: 1px solid rgba(74, 222, 128, 0.2);
+      color: var(--accent);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      padding: 4px 10px;
+      border-radius: 20px;
+      margin-bottom: 20px;
+    }
+
+    .badge-dot {
+      width: 6px; height: 6px;
+      background: var(--accent);
+      border-radius: 50%;
+      animation: pulse 1.6s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.4; transform: scale(0.8); }
+    }
+
+    .card-title {
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--text-primary);
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin-bottom: 6px;
+    }
+
+    .card-subtitle {
+      font-size: 13px;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+      margin-bottom: 28px;
+    }
+
+    .divider {
+      height: 1px;
+      background: linear-gradient(to right, transparent, rgba(255,255,255,0.06), transparent);
+      margin-bottom: 24px;
+    }
+
+    /* Input Group */
+    .input-group {
+      margin-bottom: 16px;
+    }
+
+    .input-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+      margin-bottom: 7px;
+    }
+
+    .input-wrapper {
+      position: relative;
+    }
+
+    .input-field {
+      width: 100%;
+      padding: 12px 16px 12px 42px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 10px;
+      font-size: 13px;
+      color: var(--text-primary);
+      font-family: 'JetBrains Mono', monospace;
+      transition: all 0.25s ease;
+      outline: none;
+    }
+
+    .input-field::placeholder {
+      color: rgba(107, 122, 153, 0.45);
+      font-size: 12px;
+    }
+
+    .input-field:focus {
+      border-color: rgba(74, 222, 128, 0.4);
+      background: rgba(74, 222, 128, 0.03);
+      box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.08);
+    }
+
+    .input-field.valid {
+      border-color: rgba(74, 222, 128, 0.5);
+    }
+
+    .input-field.invalid {
+      border-color: rgba(248, 113, 113, 0.5);
+    }
+
+    .input-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      font-size: 14px;
+      pointer-events: none;
+      transition: color 0.25s;
+    }
+
+    .input-wrapper:focus-within .input-icon {
+      color: var(--accent);
+    }
+
+    .eye-toggle {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-muted);
+      font-size: 15px;
+      padding: 0;
+      width: auto;
+      margin: 0;
+      transition: color 0.2s;
+    }
+    .eye-toggle:hover { color: var(--accent); }
+
+    /* Validation checklist */
+    .validation-list {
+      display: none;
+      flex-direction: column;
+      gap: 5px;
+      margin-top: 8px;
+      padding: 10px 12px;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 8px;
+      animation: fadeIn 0.2s ease;
+    }
+
+    .validation-list.show { display: flex; }
+
+    .validation-item {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 11px;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-muted);
+      transition: color 0.2s;
+    }
+
+    .validation-item.valid { color: var(--accent); }
+    .validation-item.invalid { color: var(--error); }
+
+    .v-icon {
+      font-size: 12px;
+      min-width: 14px;
+      text-align: center;
+    }
+
+    /* Messages */
+    .error-msg {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      background: var(--error-bg);
+      border: 1px solid rgba(248, 113, 113, 0.2);
+      color: var(--error);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      margin-bottom: 14px;
+      animation: fadeIn 0.2s ease;
+    }
+    .error-msg.show { display: flex; }
+
+    .success-msg {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      background: rgba(74, 222, 128, 0.07);
+      border: 1px solid rgba(74, 222, 128, 0.2);
+      color: var(--accent);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      margin-bottom: 14px;
+      animation: fadeIn 0.2s ease;
+    }
+    .success-msg.show { display: flex; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-4px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Submit Button */
+    .submit-btn {
+      width: 100%;
+      padding: 13px;
+      background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+      color: #030a05;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      font-family: 'Syne', sans-serif;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      position: relative;
+      overflow: hidden;
+      margin-top: 4px;
+    }
+
+    .submit-btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 60%);
+      opacity: 0;
+      transition: opacity 0.25s;
+    }
+
+    .submit-btn:hover:not(:disabled)::before { opacity: 1; }
+
+    .submit-btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 32px rgba(34, 197, 94, 0.35);
+    }
+
+    .submit-btn:active:not(:disabled) { transform: translateY(0); }
+
+    .submit-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .submit-btn.loading .btn-text { visibility: hidden; }
+
+    .btn-spinner {
+      display: none;
+      position: absolute;
+      left: 50%; top: 50%;
+      transform: translate(-50%, -50%);
+      width: 18px; height: 18px;
+      border: 2px solid rgba(3, 10, 5, 0.3);
+      border-top-color: #030a05;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    .submit-btn.loading .btn-spinner { display: block; }
+
+    @keyframes spin { to { transform: translate(-50%, -50%) rotate(360deg); } }
+
+    /* Strength bar */
+    .strength-bar-wrap {
+      display: none;
+      margin-top: 8px;
+      gap: 4px;
+    }
+    .strength-bar-wrap.show { display: flex; }
+
+    .strength-seg {
+      flex: 1;
+      height: 3px;
+      border-radius: 2px;
+      background: rgba(255,255,255,0.07);
+      transition: background 0.3s ease;
+    }
+
+    .strength-label {
+      font-size: 10px;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-muted);
+      margin-top: 4px;
+      text-align: right;
+      transition: color 0.3s;
+    }
+
+    /* Footer */
+    .card-footer {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 13px;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .card-footer a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+      border-bottom: 1px solid transparent;
+      transition: all 0.2s;
+    }
+
+    .card-footer a:hover { border-bottom-color: var(--accent); }
+  </style>
+</head>
+<body>
+
+  <!-- Background -->
+  <div class="bg-mesh">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+  <div class="grid-overlay"></div>
+
+  <!-- Card -->
+  <div class="card">
+    <!-- Corner accents -->
+    <div class="corner corner-tl"></div>
+    <div class="corner corner-tr"></div>
+    <div class="corner corner-bl"></div>
+    <div class="corner corner-br"></div>
+
+    <!-- Header -->
+    <div class="badge">
+      <span class="badge-dot"></span>
+      NEW ACCOUNT
+    </div>
+    <h1 class="card-title">Join the<br/>workspace.</h1>
+    <p class="card-subtitle">// create your codetrack account</p>
+
+    <div class="divider"></div>
+
+    <!-- Form -->
+    <form id="registerForm" onsubmit="handleRegister(event)" novalidate>
+
+      <!-- Username -->
+      <div class="input-group">
+        <div class="input-label">
+          <span>◈</span> Username
+        </div>
+        <div class="input-wrapper">
+          <span class="input-icon">⌘</span>
+          <input
+            class="input-field"
+            type="text"
+            id="username"
+            name="username"
+            placeholder="letters, numbers, underscore (3–20)"
+            autocomplete="username"
+            disabled
+          />
+        </div>
+        <div id="usernameValidation" class="validation-list">
+          <div class="validation-item" id="usernameLengthCheck">
+            <span class="v-icon">○</span>
+            <span>3–20 characters</span>
+          </div>
+          <div class="validation-item" id="usernameCharCheck">
+            <span class="v-icon">○</span>
+            <span>Letters, numbers, underscore only</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Password -->
+      <div class="input-group">
+        <div class="input-label">
+          <span>◈</span> Password
+        </div>
+        <div class="input-wrapper">
+          <span class="input-icon">⚿</span>
+          <input
+            class="input-field"
+            type="password"
+            id="password"
+            name="password"
+            placeholder="create a strong password"
+            autocomplete="new-password"
+            style="padding-right: 40px;"
+            disabled
+          />
+          <button type="button" class="eye-toggle" id="eyeToggle1" onclick="togglePassword('password','eyeToggle1')">👁</button>
+        </div>
+
+        <!-- Strength bar -->
+        <div id="strengthBarWrap" class="strength-bar-wrap">
+          <div class="strength-seg" id="seg1"></div>
+          <div class="strength-seg" id="seg2"></div>
+          <div class="strength-seg" id="seg3"></div>
+          <div class="strength-seg" id="seg4"></div>
+        </div>
+        <div id="strengthLabel" class="strength-label" style="display:none;"></div>
+
+        <div id="passwordValidation" class="validation-list">
+          <div class="validation-item" id="passwordLengthCheck">
+            <span class="v-icon">○</span>
+            <span>At least 6 characters</span>
+          </div>
+          <div class="validation-item" id="passwordUpperCheck">
+            <span class="v-icon">○</span>
+            <span>At least 1 uppercase letter</span>
+          </div>
+          <div class="validation-item" id="passwordNumberCheck">
+            <span class="v-icon">○</span>
+            <span>At least 1 number</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Confirm Password -->
+      <div class="input-group">
+        <div class="input-label">
+          <span>◈</span> Confirm Password
+        </div>
+        <div class="input-wrapper">
+          <span class="input-icon">⚿</span>
+          <input
+            class="input-field"
+            type="password"
+            id="confirmPassword"
+            name="confirmPassword"
+            placeholder="re-enter your password"
+            autocomplete="new-password"
+            style="padding-right: 40px;"
+            disabled
+          />
+          <button type="button" class="eye-toggle" id="eyeToggle2" onclick="togglePassword('confirmPassword','eyeToggle2')">👁</button>
+        </div>
+        <div id="passwordMatchValidation" class="validation-list">
+          <div class="validation-item" id="passwordMatchCheck">
+            <span class="v-icon">○</span>
+            <span>Passwords match</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Messages -->
+      <div id="errorMessage" class="error-msg">
+        <span>⚠</span>
+        <span id="errorText"></span>
+      </div>
+      <div id="successMessage" class="success-msg">
+        <span>✓</span>
+        <span id="successText"></span>
+      </div>
+
+      <!-- Submit -->
+      <button type="submit" id="registerBtn" class="submit-btn" disabled>
+        <span class="btn-text">Create Account →</span>
+        <div class="btn-spinner"></div>
+      </button>
+
+    </form>
+
+    <div class="card-footer">
+      Already have an account? <a href="login.html">Sign in →</a>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE_URL =
+      window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        ? 'http://localhost:5000/api'
+        : '/api';
+
+    const usernameInput      = document.getElementById('username');
+    const passwordInput      = document.getElementById('password');
+    const confirmInput       = document.getElementById('confirmPassword');
+    const registerBtn        = document.getElementById('registerBtn');
+
+    window.addEventListener('load', () => {
+      usernameInput.disabled = false;
+      passwordInput.disabled = false;
+      confirmInput.disabled  = false;
+      registerBtn.disabled   = false;
+    });
+
+    usernameInput.addEventListener('input', validateUsername);
+    passwordInput.addEventListener('input', () => { validatePassword(); updateStrength(); });
+    confirmInput.addEventListener('input', validatePassword);
+
+    // --- Eye toggle ---
+    function togglePassword(fieldId, btnId) {
+      const field = document.getElementById(fieldId);
+      const btn   = document.getElementById(btnId);
+      field.type  = field.type === 'password' ? 'text' : 'password';
+      btn.textContent = field.type === 'password' ? '👁' : '🙈';
+    }
+
+    // --- Validation helpers ---
+    function setCheck(id, isValid, hasInput) {
+      const el   = document.getElementById(id);
+      const icon = el.querySelector('.v-icon');
+      el.classList.toggle('valid',   isValid && hasInput);
+      el.classList.toggle('invalid', !isValid && hasInput);
+      if (!hasInput) { icon.textContent = '○'; return; }
+      icon.textContent = isValid ? '✓' : '✗';
+    }
+
+    function validateUsername() {
+      const val          = usernameInput.value;
+      const hasInput     = val.length > 0;
+      const lengthValid  = val.length >= 3 && val.length <= 20;
+      const charValid    = /^[a-zA-Z0-9_]*$/.test(val);
+
+      setCheck('usernameLengthCheck', lengthValid, hasInput);
+      setCheck('usernameCharCheck',   charValid,   hasInput);
+
+      const panel = document.getElementById('usernameValidation');
+      panel.classList.toggle('show', hasInput);
+      usernameInput.classList.toggle('valid',   hasInput && lengthValid && charValid);
+      usernameInput.classList.toggle('invalid', hasInput && (!lengthValid || !charValid));
+    }
+
+    function validatePassword() {
+      const pwd    = passwordInput.value;
+      const conf   = confirmInput.value;
+      const hasPwd = pwd.length > 0;
+      const hasConf = conf.length > 0;
+
+      const lenOk   = pwd.length >= 6;
+      const upperOk = /[A-Z]/.test(pwd);
+      const numOk   = /[0-9]/.test(pwd);
+      const matchOk = hasPwd && hasConf && pwd === conf;
+
+      setCheck('passwordLengthCheck', lenOk,   hasPwd);
+      setCheck('passwordUpperCheck',  upperOk, hasPwd);
+      setCheck('passwordNumberCheck', numOk,   hasPwd);
+      setCheck('passwordMatchCheck',  matchOk, hasConf);
+
+      document.getElementById('passwordValidation').classList.toggle('show', hasPwd);
+      passwordInput.classList.toggle('valid',   hasPwd && lenOk && upperOk && numOk);
+      passwordInput.classList.toggle('invalid', hasPwd && (!lenOk || !upperOk || !numOk));
+
+      document.getElementById('passwordMatchValidation').classList.toggle('show', hasConf);
+      confirmInput.classList.toggle('valid',   hasConf && matchOk);
+      confirmInput.classList.toggle('invalid', hasConf && !matchOk);
+    }
+
+    // --- Password strength bar ---
+    const colors = {
+      weak:   '#f87171',
+      fair:   '#fbbf24',
+      good:   '#34d399',
+      strong: '#4ade80'
+    };
+
+    function updateStrength() {
+      const pwd   = passwordInput.value;
+      const wrap  = document.getElementById('strengthBarWrap');
+      const label = document.getElementById('strengthLabel');
+      const segs  = [document.getElementById('seg1'), document.getElementById('seg2'),
+                     document.getElementById('seg3'), document.getElementById('seg4')];
+
+      if (!pwd.length) {
+        wrap.classList.remove('show');
+        label.style.display = 'none';
+        segs.forEach(s => s.style.background = 'rgba(255,255,255,0.07)');
+        return;
+      }
+
+      wrap.classList.add('show');
+      label.style.display = 'block';
+
+      let score = 0;
+      if (pwd.length >= 6)  score++;
+      if (pwd.length >= 10) score++;
+      if (/[A-Z]/.test(pwd) && /[a-z]/.test(pwd)) score++;
+      if (/[0-9]/.test(pwd)) score++;
+      if (/[^a-zA-Z0-9]/.test(pwd)) score++;
+
+      let level, color, text;
+      if (score <= 1)      { level = 1; color = colors.weak;   text = 'WEAK'; }
+      else if (score <= 2) { level = 2; color = colors.fair;   text = 'FAIR'; }
+      else if (score <= 3) { level = 3; color = colors.good;   text = 'GOOD'; }
+      else                 { level = 4; color = colors.strong; text = 'STRONG'; }
+
+      segs.forEach((s, i) => {
+        s.style.background = i < level ? color : 'rgba(255,255,255,0.07)';
+      });
+      label.textContent  = text;
+      label.style.color  = color;
+    }
+
+    // --- Messages ---
+    function showError(msg) {
+      document.getElementById('errorText').textContent = msg;
+      document.getElementById('errorMessage').classList.add('show');
+      document.getElementById('successMessage').classList.remove('show');
+    }
+
+    function showSuccess(msg) {
+      document.getElementById('successText').textContent = msg;
+      document.getElementById('successMessage').classList.add('show');
+      document.getElementById('errorMessage').classList.remove('show');
+    }
+
+    function clearMessages() {
+      document.getElementById('errorMessage').classList.remove('show');
+      document.getElementById('successMessage').classList.remove('show');
+    }
+
+    // --- Submit ---
+    async function handleRegister(event) {
+      event.preventDefault();
+
+      const username = usernameInput.value.trim();
+      const password = passwordInput.value;
+      const confirm  = confirmInput.value;
+
+      clearMessages();
+
+      if (!username || !password || !confirm) {
+        showError('Please fill in all fields.'); return;
+      }
+      if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) {
+        showError('Username must be 3–20 chars (letters, numbers, underscore).'); return;
+      }
+      if (password.length < 6) {
+        showError('Password must be at least 6 characters.'); return;
+      }
+      if (!/[A-Z]/.test(password) || !/[0-9]/.test(password)) {
+        showError('Password needs at least 1 uppercase letter and 1 number.'); return;
+      }
+      if (password !== confirm) {
+        showError('Passwords do not match.'); return;
+      }
+
+      try {
+        registerBtn.classList.add('loading');
+        registerBtn.disabled = true;
+
+        const response = await fetch(`${API_BASE_URL}/auth/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message || 'Registration failed');
+
+        showSuccess('Account created! Redirecting to login...');
+
+        setTimeout(() => {
+          window.location.href = 'login.html';
+        }, 2000);
+
+      } catch (error) {
+        showError(error.message);
+        registerBtn.classList.remove('loading');
+        registerBtn.disabled = false;
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,452 +1,1481 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CodeTrack - Dashboard</title>
-  <link rel="stylesheet" href="styles-modern.css">
-  <!-- Chart.js CDN -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard — CodeTrack</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    /* =============================================
+       CSS VARIABLES & RESET
+    ============================================= */
+    :root {
+      --bg:          #060811;
+      --bg-card:     rgba(15, 17, 26, 0.8);
+      --bg-card-2:   rgba(20, 23, 35, 0.6);
+      --border:      rgba(255,255,255,0.06);
+      --border-hover:rgba(74, 222, 128, 0.25);
+      --accent:      #4ade80;
+      --accent-2:    #22c55e;
+      --accent-dim:  rgba(74, 222, 128, 0.12);
+      --accent-glow: rgba(74, 222, 128, 0.3);
+      --blue:        #60a5fa;
+      --blue-dim:    rgba(96, 165, 250, 0.12);
+      --amber:       #fbbf24;
+      --amber-dim:   rgba(251, 191, 36, 0.12);
+      --red:         #f87171;
+      --red-dim:     rgba(248, 113, 113, 0.12);
+      --purple:      #a78bfa;
+      --text-1:      #f0f4ff;
+      --text-2:      #8b9bbf;
+      --text-3:      #4a566e;
+      --sidebar-bg:  rgba(10, 12, 20, 0.9);
+      --topbar-bg:   rgba(6, 8, 17, 0.8);
+      --sidebar-w:   240px;
+      --header-h:    68px;
+      --radius:      14px;
+      --radius-sm:   8px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Syne', sans-serif;
+      background: var(--bg);
+      color: var(--text-1);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* =============================================
+       BACKGROUND
+    ============================================= */
+    .bg-layer {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    }
+
+    .orb {
+      position: absolute; border-radius: 50%;
+      filter: blur(120px); opacity: 0.18;
+    }
+    .orb-1 { width: 600px; height: 600px; background: radial-gradient(#0d3320,transparent); top:-150px; left:-100px; animation: slow-drift 20s ease-in-out infinite alternate; }
+    .orb-2 { width: 500px; height: 500px; background: radial-gradient(#0a1f3a,transparent); bottom:-100px; right:-100px; animation: slow-drift 24s ease-in-out infinite alternate-reverse; }
+    .orb-3 { width: 350px; height: 350px; background: radial-gradient(#1a0f40,transparent); top:40%; left:50%; transform:translate(-50%,-50%); animation: slow-drift 18s ease-in-out infinite alternate; }
+
+    @keyframes slow-drift {
+      from { transform: translate(0,0) scale(1); }
+      to   { transform: translate(40px,50px) scale(1.08); }
+    }
+
+    .grid-dots {
+      position: fixed; inset: 0; z-index: 0;
+      background-image: radial-gradient(rgba(255,255,255,0.03) 1px, transparent 1px);
+      background-size: 28px 28px;
+    }
+
+    /* =============================================
+       LAYOUT
+    ============================================= */
+    .layout {
+      position: relative; z-index: 1;
+      display: flex; min-height: 100vh;
+    }
+
+    /* =============================================
+       SIDEBAR
+    ============================================= */
+    .sidebar {
+      width: var(--sidebar-w);
+      min-height: 100vh;
+      background: var(--sidebar-bg);
+      border-right: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      padding: 0;
+      position: fixed; left: 0; top: 0; bottom: 0;
+      backdrop-filter: blur(20px);
+      z-index: 100;
+    }
+
+    .sidebar-logo {
+      display: flex; align-items: center; gap: 10px;
+      padding: 22px 20px 18px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo-icon {
+      width: 34px; height: 34px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+      box-shadow: 0 0 20px var(--accent-glow);
+      flex-shrink: 0;
+    }
+
+    .logo-name {
+      font-size: 16px; font-weight: 800;
+      color: var(--text-1); letter-spacing: -0.02em;
+    }
+
+    .logo-version {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px; color: var(--accent);
+      letter-spacing: 0.12em;
+    }
+
+    /* User card */
+    .user-card {
+      margin: 16px 14px;
+      background: var(--accent-dim);
+      border: 1px solid rgba(74,222,128,0.15);
+      border-radius: var(--radius);
+      padding: 14px;
+      display: flex; gap: 10px; align-items: center;
+    }
+
+    .avatar {
+      width: 38px; height: 38px;
+      background: linear-gradient(135deg, #1a3a27, #0d2a1e);
+      border: 1.5px solid rgba(74,222,128,0.3);
+      border-radius: 10px;
+      font-size: 13px; font-weight: 700; color: var(--accent);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'JetBrains Mono', monospace;
+      flex-shrink: 0;
+    }
+
+    .user-name {
+      font-size: 13px; font-weight: 700; color: var(--text-1);
+    }
+
+    .user-bio {
+      font-size: 10px; color: var(--text-2); margin-top: 2px;
+      font-family: 'JetBrains Mono', monospace;
+      line-height: 1.4;
+    }
+
+    /* Social links */
+    .social-links {
+      display: flex; gap: 6px;
+      padding: 0 14px 12px;
+    }
+
+    .social-link {
+      width: 30px; height: 30px;
+      background: var(--bg-card-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--text-2);
+      text-decoration: none;
+      font-size: 11px; font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      transition: all 0.2s ease;
+    }
+
+    .social-link:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-dim);
+      transform: translateY(-2px);
+    }
+
+    .social-link svg { transition: all 0.2s; }
+
+    /* Nav */
+    .nav-section-label {
+      font-size: 9px; font-weight: 600;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--text-3); font-family: 'JetBrains Mono', monospace;
+      padding: 4px 20px 8px;
+    }
+
+    .nav-menu {
+      padding: 4px 10px;
+      flex: 1;
+    }
+
+    .nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 12px;
+      border-radius: 9px;
+      color: var(--text-2);
+      text-decoration: none;
+      font-size: 13px; font-weight: 600;
+      transition: all 0.2s ease;
+      margin-bottom: 2px;
+      cursor: pointer;
+    }
+
+    .nav-item:hover {
+      background: rgba(255,255,255,0.04);
+      color: var(--text-1);
+    }
+
+    .nav-item.active {
+      background: var(--accent-dim);
+      color: var(--accent);
+      border: 1px solid rgba(74,222,128,0.15);
+    }
+
+    .nav-icon {
+      width: 22px; text-align: center; font-size: 14px;
+      flex-shrink: 0;
+    }
+
+    /* Sidebar stats */
+    .sidebar-stats {
+      padding: 14px;
+      border-top: 1px solid var(--border);
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .stat-mini {
+      background: var(--bg-card-2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px;
+      text-align: center;
+    }
+
+    .stat-mini-val {
+      font-size: 20px; font-weight: 800;
+      color: var(--accent);
+      font-family: 'JetBrains Mono', monospace;
+      line-height: 1;
+    }
+
+    .stat-mini-lbl {
+      font-size: 9px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.1em;
+      color: var(--text-3); margin-top: 4px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* =============================================
+       MAIN AREA
+    ============================================= */
+    .main {
+      margin-left: var(--sidebar-w);
+      flex: 1;
+      display: flex; flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* Header */
+    .topbar {
+      height: var(--header-h);
+      border-bottom: 1px solid var(--border);
+      background: var(--topbar-bg);
+      backdrop-filter: blur(20px);
+      display: flex; align-items: center;
+      justify-content: space-between;
+      padding: 0 28px;
+      position: sticky; top: 0; z-index: 50;
+    }
+
+    .topbar-left h1 {
+      font-size: 18px; font-weight: 800;
+      color: var(--text-1); letter-spacing: -0.02em;
+    }
+
+    .topbar-left p {
+      font-size: 11px; color: var(--text-2);
+      font-family: 'JetBrains Mono', monospace;
+      margin-top: 1px;
+    }
+
+    .topbar-right {
+      display: flex; align-items: center; gap: 10px;
+    }
+
+    .search-box {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--bg-card-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 7px 12px;
+      transition: all 0.2s;
+    }
+
+    .search-box:focus-within {
+      border-color: rgba(74,222,128,0.35);
+      background: var(--accent-dim);
+    }
+
+    .search-box input {
+      background: none; border: none; outline: none;
+      color: var(--text-1);
+      font-size: 12px; font-family: 'JetBrains Mono', monospace;
+      width: 160px;
+    }
+
+    .search-box input::placeholder { color: var(--text-3); }
+
+    .search-icon { color: var(--text-3); font-size: 12px; }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      color: #030a05;
+      border: none; border-radius: var(--radius-sm);
+      padding: 8px 16px;
+      font-size: 12px; font-weight: 700;
+      font-family: 'Syne', sans-serif;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+      position: relative; overflow: hidden;
+    }
+
+    .btn-primary::before {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent 60%);
+      opacity: 0; transition: opacity 0.2s;
+    }
+
+    .btn-primary:hover::before { opacity: 1; }
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px rgba(34,197,94,0.35);
+    }
+
+    .theme-toggle {
+      width: 34px; height: 34px;
+      background: var(--bg-card-2);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+
+    .theme-toggle:hover {
+      border-color: var(--accent);
+      background: var(--accent-dim);
+    }
+
+    .logout-btn {
+      width: 34px; height: 34px;
+      background: var(--bg-card-2);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
+      transition: all 0.2s;
+      color: var(--text-2);
+      text-decoration: none;
+    }
+
+    .logout-btn:hover {
+      border-color: var(--red);
+      background: var(--red-dim);
+      color: var(--red);
+    }
+
+    /* =============================================
+       PAGE BODY
+    ============================================= */
+    .page-body {
+      padding: 24px 28px;
+      flex: 1;
+    }
+
+    /* =============================================
+       METRIC CARDS
+    ============================================= */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-bottom: 20px;
+      animation: fadeUp 0.5s ease both;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .metric-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      backdrop-filter: blur(16px);
+      position: relative; overflow: hidden;
+      transition: border-color 0.25s, transform 0.25s;
+      animation: fadeUp 0.5s ease both;
+    }
+
+    .metric-card:nth-child(1) { animation-delay: 0.05s; }
+    .metric-card:nth-child(2) { animation-delay: 0.1s; }
+    .metric-card:nth-child(3) { animation-delay: 0.15s; }
+
+    .metric-card::before {
+      content: ''; position: absolute;
+      top: 0; left: 0; right: 0; height: 2px;
+    }
+
+    .metric-card.green::before  { background: linear-gradient(90deg, transparent, var(--accent), transparent); }
+    .metric-card.blue::before   { background: linear-gradient(90deg, transparent, var(--blue), transparent); }
+    .metric-card.amber::before  { background: linear-gradient(90deg, transparent, var(--amber), transparent); }
+
+    .metric-card:hover {
+      border-color: var(--border-hover);
+      transform: translateY(-3px);
+    }
+
+    .metric-glow {
+      position: absolute; top: -40px; right: -40px;
+      width: 120px; height: 120px;
+      border-radius: 50%; opacity: 0.06;
+      filter: blur(30px);
+    }
+
+    .metric-card.green .metric-glow  { background: var(--accent); }
+    .metric-card.blue .metric-glow   { background: var(--blue); }
+    .metric-card.amber .metric-glow  { background: var(--amber); }
+
+    .metric-icon {
+      width: 36px; height: 36px;
+      border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; margin-bottom: 12px;
+    }
+
+    .metric-card.green .metric-icon { background: var(--accent-dim); }
+    .metric-card.blue .metric-icon  { background: var(--blue-dim); }
+    .metric-card.amber .metric-icon { background: var(--amber-dim); }
+
+    .metric-label {
+      font-size: 10px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.12em;
+      color: var(--text-2);
+      font-family: 'JetBrains Mono', monospace;
+      margin-bottom: 6px;
+    }
+
+    .metric-value {
+      font-size: 32px; font-weight: 800;
+      letter-spacing: -0.03em; line-height: 1;
+      color: var(--text-1);
+      margin-bottom: 8px;
+    }
+
+    .metric-card.green .metric-value  { color: var(--accent); }
+    .metric-card.blue .metric-value   { color: var(--blue); }
+    .metric-card.amber .metric-value  { color: var(--amber); }
+
+    .metric-pills {
+      display: flex; gap: 5px; flex-wrap: wrap;
+    }
+
+    .pill {
+      font-size: 10px; font-weight: 600;
+      font-family: 'JetBrains Mono', monospace;
+      padding: 2px 7px; border-radius: 4px;
+    }
+
+    .pill.easy   { background: rgba(74,222,128,0.12); color: var(--accent); }
+    .pill.medium { background: rgba(251,191,36,0.12);  color: var(--amber); }
+    .pill.hard   { background: rgba(248,113,113,0.12); color: var(--red); }
+    .pill.info   { background: rgba(96,165,250,0.12);  color: var(--blue); }
+
+    /* Progress ring */
+    .progress-ring-wrap {
+      display: flex; align-items: center; gap: 10px;
+    }
+
+    .progress-ring {
+      width: 44px; height: 44px;
+      transform: rotate(-90deg);
+      flex-shrink: 0;
+    }
+
+    .progress-ring circle {
+      fill: none; stroke-width: 4;
+    }
+
+    .ring-bg   { stroke: rgba(255,255,255,0.06); }
+    .ring-fill { stroke: var(--blue); stroke-linecap: round; transition: stroke-dashoffset 1s ease; }
+
+    /* =============================================
+       CONTENT GRID
+    ============================================= */
+    .content-grid {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 14px;
+    }
+
+    /* =============================================
+       CARD BASE
+    ============================================= */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      backdrop-filter: blur(16px);
+      overflow: hidden;
+      transition: border-color 0.25s;
+      animation: fadeUp 0.5s ease both;
+    }
+
+    .card:hover { border-color: rgba(255,255,255,0.1); }
+
+    .card:nth-child(1) { animation-delay: 0.2s; }
+    .card:nth-child(2) { animation-delay: 0.25s; }
+
+    .card-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 20px 0;
+    }
+
+    .card-title {
+      font-size: 13px; font-weight: 700;
+      color: var(--text-1); letter-spacing: -0.01em;
+    }
+
+    .card-badge {
+      background: var(--accent-dim);
+      color: var(--accent);
+      border: 1px solid rgba(74,222,128,0.2);
+      font-size: 10px; font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      padding: 2px 8px; border-radius: 20px;
+    }
+
+    .card-badge.blue {
+      background: var(--blue-dim); color: var(--blue);
+      border-color: rgba(96,165,250,0.2);
+    }
+
+    .card-body { padding: 14px 20px 18px; }
+
+    /* =============================================
+       REVISION ROWS
+    ============================================= */
+    .revision-list { padding: 8px 20px 16px; display: flex; flex-direction: column; gap: 6px; }
+
+    .revision-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 12px;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+
+    .revision-row:hover {
+      background: var(--accent-dim);
+      border-color: rgba(74,222,128,0.2);
+    }
+
+    .revision-info { display: flex; flex-direction: column; gap: 2px; }
+
+    .revision-name {
+      font-size: 13px; font-weight: 600; color: var(--text-1);
+    }
+
+    .revision-topic {
+      font-size: 10px; font-family: 'JetBrains Mono', monospace;
+      color: var(--text-3); text-transform: uppercase; letter-spacing: 0.08em;
+    }
+
+    .diff-badge {
+      font-size: 10px; font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      padding: 3px 8px; border-radius: 5px;
+      letter-spacing: 0.06em;
+    }
+
+    .diff-badge.easy   { background: var(--accent-dim); color: var(--accent); }
+    .diff-badge.medium { background: var(--amber-dim); color: var(--amber); }
+    .diff-badge.hard   { background: var(--red-dim); color: var(--red); }
+
+    /* =============================================
+       CHART
+    ============================================= */
+    .chart-wrap {
+      padding: 6px 20px 20px;
+      height: 200px;
+    }
+
+    /* =============================================
+       RIGHT COLUMN CARDS
+    ============================================= */
+    .right-col { display: flex; flex-direction: column; gap: 14px; }
+
+    /* Difficulty breakdown */
+    .diff-breakdown {
+      display: flex; flex-direction: column; gap: 8px;
+      padding: 8px 20px 16px;
+    }
+
+    .diff-row {
+      display: flex; align-items: center; gap: 10px;
+    }
+
+    .diff-circle {
+      width: 34px; height: 34px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      flex-shrink: 0;
+    }
+
+    .diff-circle.easy   { background: var(--accent-dim); color: var(--accent); }
+    .diff-circle.medium { background: var(--amber-dim);  color: var(--amber); }
+    .diff-circle.hard   { background: var(--red-dim);    color: var(--red); }
+
+    .diff-bar-wrap { flex: 1; }
+
+    .diff-name {
+      font-size: 11px; font-weight: 600; color: var(--text-2);
+      font-family: 'JetBrains Mono', monospace;
+      margin-bottom: 4px;
+    }
+
+    .diff-bar {
+      height: 4px; background: rgba(255,255,255,0.06);
+      border-radius: 2px; overflow: hidden;
+    }
+
+    .diff-fill {
+      height: 100%; border-radius: 2px;
+      transition: width 1.2s cubic-bezier(0.4,0,0.2,1);
+    }
+
+    .diff-fill.easy   { background: var(--accent); }
+    .diff-fill.medium { background: var(--amber); }
+    .diff-fill.hard   { background: var(--red); }
+
+    .diff-pct {
+      font-size: 11px; font-weight: 600;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-2); min-width: 32px; text-align: right;
+    }
+
+    /* Topics */
+    .topics-list {
+      display: flex; flex-direction: column; gap: 7px;
+      padding: 8px 20px 16px;
+    }
+
+    .topic-row {
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    .topic-name {
+      font-size: 11px; font-weight: 600;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-2); min-width: 58px;
+    }
+
+    .topic-bar {
+      flex: 1; height: 4px;
+      background: rgba(255,255,255,0.06); border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .topic-fill {
+      height: 100%; border-radius: 2px;
+      background: linear-gradient(90deg, var(--blue), var(--purple));
+      transition: width 1.2s cubic-bezier(0.4,0,0.2,1);
+    }
+
+    .topic-count {
+      font-size: 11px; font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-2); min-width: 16px; text-align: right;
+    }
+
+    /* Bookmarks */
+    .bookmarks-list {
+      display: flex; flex-direction: column; gap: 6px;
+      padding: 8px 20px 16px;
+    }
+
+    .bookmark-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 12px;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      transition: all 0.2s; cursor: pointer;
+    }
+
+    .bookmark-row:hover {
+      background: var(--blue-dim);
+      border-color: rgba(96,165,250,0.2);
+    }
+
+    .bookmark-icon {
+      font-size: 13px; flex-shrink: 0;
+    }
+
+    .bookmark-name {
+      font-size: 12px; font-weight: 600; color: var(--text-1); flex: 1;
+    }
+
+    .bookmark-tag {
+      font-size: 9px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.08em;
+      color: var(--blue); font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* =============================================
+       MODAL
+    ============================================= */
+    .modal-overlay {
+      display: none;
+      position: fixed; inset: 0; z-index: 200;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(8px);
+      align-items: center; justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-overlay.open { display: flex; }
+
+    .modal-box {
+      background: rgba(12, 14, 22, 0.97);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 18px;
+      padding: 28px;
+      width: 100%; max-width: 400px;
+      box-shadow: 0 40px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(74,222,128,0.06);
+      animation: modalIn 0.3s cubic-bezier(0.22,1,0.36,1) both;
+    }
+
+    @keyframes modalIn {
+      from { opacity: 0; transform: scale(0.94) translateY(16px); }
+      to   { opacity: 1; transform: scale(1)    translateY(0); }
+    }
+
+    .modal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 22px;
+    }
+
+    .modal-title {
+      font-size: 16px; font-weight: 800; color: var(--text-1);
+    }
+
+    .modal-close {
+      width: 30px; height: 30px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      color: var(--text-2); font-size: 16px;
+      cursor: pointer; display: flex;
+      align-items: center; justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .modal-close:hover { background: var(--red-dim); color: var(--red); border-color: rgba(248,113,113,0.3); }
+
+    .form-group { margin-bottom: 16px; }
+
+    .form-label {
+      display: block;
+      font-size: 10px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.12em;
+      color: var(--text-2);
+      font-family: 'JetBrains Mono', monospace;
+      margin-bottom: 7px;
+    }
+
+    .form-input, .form-select {
+      width: 100%;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      padding: 11px 14px;
+      color: var(--text-1);
+      font-size: 13px;
+      font-family: 'JetBrains Mono', monospace;
+      outline: none;
+      transition: all 0.2s;
+      appearance: none;
+    }
+
+    .form-input::placeholder { color: var(--text-3); font-size: 12px; }
+    .form-input:focus, .form-select:focus {
+      border-color: rgba(74,222,128,0.4);
+      background: var(--accent-dim);
+      box-shadow: 0 0 0 3px rgba(74,222,128,0.08);
+    }
+
+    .form-select option { background: #0e1018; color: var(--text-1); }
+
+    /* =============================================
+       SECTION DIVIDER
+    ============================================= */
+    .section-label {
+      font-size: 10px; font-weight: 600;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--text-3); font-family: 'JetBrains Mono', monospace;
+      margin-bottom: 10px;
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    .section-label::after {
+      content: ''; flex: 1; height: 1px;
+      background: var(--border);
+    }
+
+    /* =============================================
+       RESPONSIVE
+    ============================================= */
+    @media (max-width: 1100px) {
+      .content-grid { grid-template-columns: 1fr; }
+      .right-col { display: grid; grid-template-columns: repeat(3, 1fr); }
+    }
+
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .main { margin-left: 0; }
+      .metrics-grid { grid-template-columns: 1fr 1fr; }
+      .right-col { grid-template-columns: 1fr; }
+    }
+
+    /* =============================================
+       SCROLLBAR
+    ============================================= */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
+
+    /* =============================================
+       NOTIFICATION TOAST
+    ============================================= */
+    .toast {
+      position: fixed; bottom: 24px; right: 24px;
+      background: rgba(12,14,22,0.95);
+      border: 1px solid rgba(74,222,128,0.3);
+      border-radius: 10px;
+      padding: 12px 18px;
+      display: flex; align-items: center; gap: 10px;
+      font-size: 13px; font-family: 'JetBrains Mono', monospace;
+      color: var(--accent);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      z-index: 300;
+      transform: translateY(80px); opacity: 0;
+      transition: all 0.35s cubic-bezier(0.22,1,0.36,1);
+      pointer-events: none;
+    }
+
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast.error { border-color: rgba(248,113,113,0.3); color: var(--red); }
+  </style>
 </head>
 <body>
 
-  <div class="dashboard-container">
+  <!-- BG -->
+  <div class="bg-layer">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+  <div class="grid-dots"></div>
 
-    <!-- MINIMAL SIDEBAR -->
+  <div class="layout">
+
+    <!-- =========== SIDEBAR =========== -->
     <aside class="sidebar">
 
-      <!-- Logo/Branding -->
-      <div class="sidebar-header">
-        <div class="logo">🚀</div>
-        <span class="logo-text">CodeTrack</span>
-      </div>
-
-      <!-- User Profile (Compact) -->
-      <div class="user-card">
-        <div class="avatar">VA</div>
-        <div class="user-info">
-          <h3 class="user-name">Vaishnavi</h3>
-          <p class="user-bio">Full-Stack Developer | DSA Learning Journey</p>
+      <div class="sidebar-logo">
+        <div class="logo-icon">🚀</div>
+        <div>
+          <div class="logo-name">CodeTrack</div>
+          <div class="logo-version">V 2.0.0</div>
         </div>
       </div>
 
-      <!-- Social Links -->
-      <div class="social-links">
-        <a href="https://github.com/ciphervaishnavi" target="_blank" class="social-link" title="GitHub">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
-          </svg>
-        </a>
-        <a href="https://www.linkedin.com/in/vaishnavishukla019/" target="_blank" class="social-link" title="LinkedIn">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
-          </svg>
-        </a>
-        <a href="https://leetcode.com/u/vaish_cpp/" target="_blank" class="social-link" title="LeetCode">
-          <span style="font-weight: bold; font-size: 16px;">LC</span>
-        </a>
-        <a href="https://www.codechef.com/users/helloworld_06" target="_blank" class="social-link" title="CodeChef">
-          <span style="font-weight: bold; font-size: 16px;">CC</span>
-        </a>
-        <a href="https://codeforces.com/profile/vaishnavishukla439" target="_blank" class="social-link" title="Codeforces">
-          <span style="font-weight: bold; font-size: 16px;">CF</span>
-        </a>
+      <div class="user-card">
+        <div class="avatar" id="sidebarAvatar">VA</div>
+        <div>
+          <div class="user-name" id="sidebarName">Vaishnavi</div>
+          <div class="user-bio">Full-Stack Dev · DSA Journey</div>
+        </div>
       </div>
 
-      <!-- Navigation Menu (Minimal) -->
+      <div class="social-links">
+        <a href="https://github.com/ciphervaishnavi" target="_blank" class="social-link" title="GitHub">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+        </a>
+        <a href="https://www.linkedin.com/in/vaishnavishukla019/" target="_blank" class="social-link" title="LinkedIn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+        </a>
+        <a href="https://leetcode.com/u/vaish_cpp/" target="_blank" class="social-link" title="LeetCode">LC</a>
+        <a href="https://www.codechef.com/users/helloworld_06" target="_blank" class="social-link" title="CodeChef">CC</a>
+        <a href="https://codeforces.com/profile/vaishnavishukla439" target="_blank" class="social-link" title="Codeforces">CF</a>
+      </div>
+
+      <div class="nav-section-label">Menu</div>
       <nav class="nav-menu">
-        <a href="#" class="nav-item active">
-          <span class="nav-icon">📊</span>
-          Dashboard
+        <a class="nav-item active" onclick="setNav(this,'dashboard')">
+          <span class="nav-icon">📊</span> Dashboard
         </a>
-        <a href="#" class="nav-item">
-          <span class="nav-icon">📝</span>
-          Problems
+        <a class="nav-item" onclick="setNav(this,'problems')">
+          <span class="nav-icon">📝</span> Problems
         </a>
-        <a href="#" class="nav-item">
-          <span class="nav-icon">🔄</span>
-          Revisions
+        <a class="nav-item" onclick="setNav(this,'revisions')">
+          <span class="nav-icon">🔄</span> Revisions
         </a>
-        <a href="#" class="nav-item">
-          <span class="nav-icon">🔖</span>
-          Bookmarks
+        <a class="nav-item" onclick="setNav(this,'bookmarks')">
+          <span class="nav-icon">🔖</span> Bookmarks
+        </a>
+        <a class="nav-item" href="profile-settings.html" style="margin-top: 12px; border-top: 1px solid var(--border); padding-top: 12px;">
+          <span class="nav-icon">⚙️</span> Profile Settings
         </a>
       </nav>
 
-      <!-- Stats Sidebar (Minimal) -->
       <div class="sidebar-stats">
         <div class="stat-mini">
-          <span class="stat-label">Solved</span>
-          <span class="stat-number">10</span>
+          <div class="stat-mini-val" id="sidebarSolved">10</div>
+          <div class="stat-mini-lbl">Solved</div>
         </div>
         <div class="stat-mini">
-          <span class="stat-label">Revisions</span>
-          <span class="stat-number">1</span>
+          <div class="stat-mini-val" id="sidebarRevisions">1</div>
+          <div class="stat-mini-lbl">Revised</div>
         </div>
       </div>
 
     </aside>
 
-    <!-- MAIN CONTENT -->
-    <main class="main-content">
+    <!-- =========== MAIN =========== -->
+    <div class="main">
 
-      <!-- Header with Search -->
-      <header class="page-header">
-        <div>
-          <h1 class="page-title">Dashboard</h1>
-          <p class="page-subtitle">Track your DSA progress</p>
+      <!-- TOPBAR -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <h1>Dashboard</h1>
+          <p>// track your dsa progress</p>
         </div>
-        <div class="header-actions">
-          <input type="text" placeholder="Search..." class="search-input">
-          <button class="btn-primary" onclick="openAddModal()">+ Add Problem</button>
-
-          <!-- Theme Toggle Button -->
-          <button onclick="toggleTheme()" class="theme-toggle" title="Toggle Dark/Light Mode">
-            <span class="icon sun">☀️</span>
-            <span class="icon moon">🌙</span>
-            <div class="toggle-circle"></div>
-          </button>
+        <div class="topbar-right">
+          <div class="search-box">
+            <span class="search-icon">⌕</span>
+            <input type="text" placeholder="search problems..." id="searchInput" oninput="filterSearch()" />
+          </div>
+          <button class="btn-primary" onclick="openModal()">+ Add Problem</button>
+          <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">🌙</button>
+          <a class="logout-btn" onclick="logout()" title="Logout">⏏</a>
         </div>
       </header>
 
-      <!-- Key Metrics (Only 3, not 4) -->
-      <section class="metrics-row">
-        <div class="metric-card">
-          <div class="metric-label">Total Solved</div>
-          <div class="metric-value">10</div>
-          <div class="metric-meta">Easy: 5 • Medium: 4 • Hard: 1</div>
+      <!-- BODY -->
+      <div class="page-body">
+
+        <!-- METRICS -->
+        <div class="section-label">Overview</div>
+        <div class="metrics-grid">
+
+          <div class="metric-card green">
+            <div class="metric-glow"></div>
+            <div class="metric-icon">✦</div>
+            <div class="metric-label">Total Solved</div>
+            <div class="metric-value" id="metricSolved">10</div>
+            <div class="metric-pills">
+              <span class="pill easy" id="metricEasy">E: 5</span>
+              <span class="pill medium" id="metricMedium">M: 4</span>
+              <span class="pill hard" id="metricHard">H: 1</span>
+            </div>
+          </div>
+
+          <div class="metric-card blue">
+            <div class="metric-glow"></div>
+            <div class="metric-icon">◎</div>
+            <div class="metric-label">Revision Progress</div>
+            <div class="progress-ring-wrap">
+              <div>
+                <div class="metric-value" id="metricRevPct">9%</div>
+                <div class="metric-pills">
+                  <span class="pill info" id="metricRevCount">1 of 11</span>
+                </div>
+              </div>
+              <svg class="progress-ring" viewBox="0 0 44 44">
+                <circle class="ring-bg" cx="22" cy="22" r="18"/>
+                <circle class="ring-fill" cx="22" cy="22" r="18" id="ringFill"
+                  stroke-dasharray="113"
+                  stroke-dashoffset="103"/>
+              </svg>
+            </div>
+          </div>
+
+          <div class="metric-card amber">
+            <div class="metric-glow"></div>
+            <div class="metric-icon">⊛</div>
+            <div class="metric-label">Bookmarks</div>
+            <div class="metric-value" id="metricBookmarks">2</div>
+            <div class="metric-pills">
+              <span class="pill medium" id="metricBookmarkLabel">important problems</span>
+            </div>
+          </div>
+
         </div>
 
-        <div class="metric-card">
-          <div class="metric-label">Revision Progress</div>
-          <div class="metric-value">9%</div>
-          <div class="metric-meta">1 of 11 completed</div>
+        <!-- CONTENT -->
+        <div class="section-label">Details</div>
+        <div class="content-grid">
+
+          <!-- LEFT -->
+          <div style="display:flex;flex-direction:column;gap:14px;">
+
+            <!-- Due Today -->
+            <div class="card">
+              <div class="card-head">
+                <div class="card-title">📅 Due for Revision Today</div>
+                <span class="card-badge" id="dueBadge">4</span>
+              </div>
+              <div class="revision-list" id="revisionList">
+                <!-- Populated by JS -->
+              </div>
+            </div>
+
+            <!-- Chart -->
+            <div class="card">
+              <div class="card-head">
+                <div class="card-title">📈 Progress Over Time</div>
+                <span class="card-badge blue">Weekly</span>
+              </div>
+              <div class="chart-wrap">
+                <canvas id="progressChart"></canvas>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- RIGHT -->
+          <div class="right-col">
+
+            <!-- Difficulty -->
+            <div class="card">
+              <div class="card-head">
+                <div class="card-title">By Difficulty</div>
+              </div>
+              <div class="diff-breakdown" id="diffBreakdown">
+                <!-- Populated by JS -->
+              </div>
+            </div>
+
+            <!-- Topics -->
+            <div class="card">
+              <div class="card-head">
+                <div class="card-title">By Topic</div>
+              </div>
+              <div class="topics-list" id="topicsList">
+                <!-- Populated by JS -->
+              </div>
+            </div>
+
+            <!-- Bookmarks -->
+            <div class="card">
+              <div class="card-head">
+                <div class="card-title">🔖 Saved Problems</div>
+              </div>
+              <div class="bookmarks-list" id="bookmarksList">
+                <!-- Populated by JS -->
+              </div>
+            </div>
+
+          </div>
+
         </div>
-
-        <div class="metric-card">
-          <div class="metric-label">Bookmarks</div>
-          <div class="metric-value">2</div>
-          <div class="metric-meta">Important problems</div>
-        </div>
-      </section>
-
-      <!-- Two Column Grid -->
-      <div class="grid-container">
-
-        <!-- LEFT: Main Content -->
-        <section class="left-column">
-
-          <!-- Revisions (Simplified) -->
-          <div class="card">
-            <div class="card-header">
-              <h2 class="card-title">📅 Due Today</h2>
-              <span class="card-badge">4</span>
-            </div>
-
-            <div class="revisions-list">
-              <div class="revision-row">
-                <div class="revision-info">
-                  <span class="revision-name">Two Sum</span>
-                  <span class="revision-topic">arrays</span>
-                </div>
-                <span class="difficulty-badge easy">Easy</span>
-              </div>
-
-              <div class="revision-row">
-                <div class="revision-info">
-                  <span class="revision-name">Longest Substring</span>
-                  <span class="revision-topic">strings</span>
-                </div>
-                <span class="difficulty-badge medium">Medium</span>
-              </div>
-
-              <div class="revision-row">
-                <div class="revision-info">
-                  <span class="revision-name">Fibonacci</span>
-                  <span class="revision-topic">dp</span>
-                </div>
-                <span class="difficulty-badge easy">Easy</span>
-              </div>
-
-              <div class="revision-row">
-                <div class="revision-info">
-                  <span class="revision-name">Binary Search</span>
-                  <span class="revision-topic">arrays</span>
-                </div>
-                <span class="difficulty-badge medium">Medium</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Progress Chart (Clean) -->
-          <div class="card">
-            <div class="card-header">
-              <h2 class="card-title">📈 Progress</h2>
-            </div>
-            <div class="chart-container">
-              <canvas id="progressChart"></canvas>
-            </div>
-          </div>
-
-        </section>
-
-        <!-- RIGHT: Sidebar Panels -->
-        <section class="right-column">
-
-          <!-- Difficulty Stats -->
-          <div class="card compact">
-            <div class="card-header">
-              <h3 class="card-title">By Difficulty</h3>
-            </div>
-            <div class="difficulty-breakdown">
-              <div class="difficulty-item">
-                <div class="difficulty-circle easy">
-                  <span>5</span>
-                </div>
-                <div class="difficulty-label">
-                  <span class="label-name">Easy</span>
-                  <span class="label-percent">45%</span>
-                </div>
-              </div>
-
-              <div class="difficulty-item">
-                <div class="difficulty-circle medium">
-                  <span>4</span>
-                </div>
-                <div class="difficulty-label">
-                  <span class="label-name">Medium</span>
-                  <span class="label-percent">36%</span>
-                </div>
-              </div>
-
-              <div class="difficulty-item">
-                <div class="difficulty-circle hard">
-                  <span>1</span>
-                </div>
-                <div class="difficulty-label">
-                  <span class="label-name">Hard</span>
-                  <span class="label-percent">9%</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Topics -->
-          <div class="card compact">
-            <div class="card-header">
-              <h3 class="card-title">By Topic</h3>
-            </div>
-            <div class="topics-list">
-              <div class="topic-row">
-                <span class="topic-name">Arrays</span>
-                <div class="topic-bar">
-                  <div class="topic-fill" style="width: 100%;"></div>
-                </div>
-                <span class="topic-count">5</span>
-              </div>
-
-              <div class="topic-row">
-                <span class="topic-name">Strings</span>
-                <div class="topic-bar">
-                  <div class="topic-fill" style="width: 40%;"></div>
-                </div>
-                <span class="topic-count">2</span>
-              </div>
-
-              <div class="topic-row">
-                <span class="topic-name">DP</span>
-                <div class="topic-bar">
-                  <div class="topic-fill" style="width: 40%;"></div>
-                </div>
-                <span class="topic-count">2</span>
-              </div>
-
-              <div class="topic-row">
-                <span class="topic-name">Graphs</span>
-                <div class="topic-bar">
-                  <div class="topic-fill" style="width: 20%;"></div>
-                </div>
-                <span class="topic-count">1</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Bookmarks -->
-          <div class="card compact">
-            <div class="card-header">
-              <h3 class="card-title">🔖 Saved</h3>
-            </div>
-            <div class="bookmarks-list">
-              <div class="bookmark-item">
-                <span class="bookmark-title">Two Sum</span>
-                <span class="bookmark-topic">arrays</span>
-              </div>
-              <div class="bookmark-item">
-                <span class="bookmark-title">Longest Substring</span>
-                <span class="bookmark-topic">strings</span>
-              </div>
-            </div>
-          </div>
-
-        </section>
-
       </div>
-
-    </main>
-
+    </div>
   </div>
 
-  <!-- Add Problem Modal -->
-  <div id="addModal" class="modal" style="display: none;">
-    <div class="modal-content">
+  <!-- =========== MODAL =========== -->
+  <div class="modal-overlay" id="addModal" onclick="handleModalClick(event)">
+    <div class="modal-box">
       <div class="modal-header">
-        <h3>Add New Problem</h3>
-        <button onclick="closeAddModal()" class="modal-close">&times;</button>
+        <div class="modal-title">+ Add New Problem</div>
+        <button class="modal-close" onclick="closeModal()">×</button>
       </div>
-      <form id="addQuestionForm" onsubmit="handleAddQuestion(event)">
+      <form onsubmit="handleAddQuestion(event)" novalidate>
         <div class="form-group">
-          <label>Problem Name</label>
-          <input type="text" id="questionName" placeholder="e.g., Two Sum" required>
+          <label class="form-label">◈ Problem Name</label>
+          <input class="form-input" type="text" id="questionName" placeholder="e.g., Two Sum" required />
         </div>
         <div class="form-group">
-          <label>Topic</label>
-          <input type="text" id="questionTopic" placeholder="e.g., arrays, dp, graphs" required>
+          <label class="form-label">◈ Topic</label>
+          <input class="form-input" type="text" id="questionTopic" placeholder="e.g., arrays, dp, graphs" required />
         </div>
         <div class="form-group">
-          <label>Difficulty</label>
-          <select id="questionDifficulty" required>
+          <label class="form-label">◈ Difficulty</label>
+          <select class="form-select" id="questionDifficulty" required>
             <option value="">Select difficulty</option>
             <option value="easy">Easy</option>
             <option value="medium">Medium</option>
             <option value="hard">Hard</option>
           </select>
         </div>
-        <button type="submit" class="btn-primary" style="width: 100%;">Add Problem</button>
+        <button type="submit" class="btn-primary" style="width:100%;padding:12px;font-size:14px;margin-top:4px;">
+          Create Problem →
+        </button>
       </form>
     </div>
   </div>
 
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <!-- External scripts (from original project) -->
+  <script src="authGuard.js"></script>
   <script src="dashboard.js"></script>
 
   <script>
-    // Debug logging for deployment
-    console.log('Dashboard HTML loaded');
-    console.log('Current URL:', window.location.href);
-    console.log('Hostname:', window.location.hostname);
-
-    // Test API connectivity
-    window.addEventListener('load', function() {
-      console.log('Page fully loaded');
-      if (typeof loadDashboardData === 'function') {
-        console.log('✅ Dashboard.js loaded successfully');
+    /* ============================================
+       THEME
+    ============================================ */
+    function applyTheme(isDark) {
+      if (isDark) {
+        // Dark mode
+        document.documentElement.style.setProperty('--bg', '#060811');
+        document.documentElement.style.setProperty('--text-1', '#f0f4ff');
+        document.documentElement.style.setProperty('--text-2', '#8b9bbf');
+        document.documentElement.style.setProperty('--text-3', '#4a566e');
+        document.documentElement.style.setProperty('--bg-card', 'rgba(15, 17, 26, 0.8)');
+        document.documentElement.style.setProperty('--bg-card-2', 'rgba(20, 23, 35, 0.6)');
+        document.documentElement.style.setProperty('--sidebar-bg', 'rgba(10, 12, 20, 0.9)');
+        document.documentElement.style.setProperty('--topbar-bg', 'rgba(6, 8, 17, 0.8)');
+        document.querySelector('.theme-toggle').textContent = '☀️';
       } else {
-        console.error('❌ Dashboard.js failed to load - using backup handlers');
-      }
-    });
-  </script>
-
-  <!-- Theme & Modal Scripts -->
-  <script>
-    // ================================
-    // THEME TOGGLE
-    // ================================
-    function toggleTheme() {
-      const html = document.documentElement;
-      if (html.classList.contains('dark')) {
-        html.classList.remove('dark');
-        localStorage.setItem('theme', 'light');
-      } else {
-        html.classList.add('dark');
-        localStorage.setItem('theme', 'dark');
-      }
-      // Reinit chart with new colors
-      if (typeof initProgressChart === 'function') {
-        initProgressChart();
+        // Light mode
+        document.documentElement.style.setProperty('--bg', '#f5f7fa');
+        document.documentElement.style.setProperty('--text-1', '#0f172a');
+        document.documentElement.style.setProperty('--text-2', '#475569');
+        document.documentElement.style.setProperty('--text-3', '#94a3b8');
+        document.documentElement.style.setProperty('--bg-card', 'rgba(255, 255, 255, 0.95)');
+        document.documentElement.style.setProperty('--bg-card-2', 'rgba(248, 250, 252, 0.9)');
+        document.documentElement.style.setProperty('--sidebar-bg', 'rgba(245, 247, 250, 0.95)');
+        document.documentElement.style.setProperty('--topbar-bg', 'rgba(255, 255, 255, 0.9)');
+        document.querySelector('.theme-toggle').textContent = '🌙';
       }
     }
 
-    // Initialize theme on load
-    (function initTheme() {
+    (function() {
       const saved = localStorage.getItem('theme');
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      if (saved === 'dark' || (!saved && prefersDark)) {
-        document.documentElement.classList.add('dark');
-      }
+      const isDark = saved ? saved === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+      applyTheme(isDark);
     })();
 
-    // ================================
-    // MODAL FUNCTIONS
-    // ================================
-    function openAddModal() {
-      document.getElementById('addModal').style.display = 'flex';
+    function toggleTheme() {
+      const isDark = localStorage.getItem('theme') === 'dark';
+      const newTheme = isDark ? 'light' : 'dark';
+      localStorage.setItem('theme', newTheme);
+      applyTheme(newTheme === 'dark');
     }
 
-    function closeAddModal() {
-      document.getElementById('addModal').style.display = 'none';
+    /* ============================================
+       TOAST
+    ============================================ */
+    function showToast(msg, isError = false) {
+      const t = document.getElementById('toast');
+      t.textContent = (isError ? '⚠ ' : '✓ ') + msg;
+      t.className = 'toast' + (isError ? ' error' : '') + ' show';
+      setTimeout(() => { t.classList.remove('show'); }, 3000);
     }
 
-    // Close modal when clicking outside
-    document.getElementById('addModal')?.addEventListener('click', function(e) {
-      if (e.target === this) closeAddModal();
-    });
+    /* ============================================
+       MODAL
+    ============================================ */
+    function openModal() {
+      document.getElementById('addModal').classList.add('open');
+    }
 
-    // ================================
-    // FORM HANDLER (Backup in case dashboard.js doesn't load)
-    // ================================
-    window.handleAddQuestion = window.handleAddQuestion || async function(event) {
-      event.preventDefault();
+    function closeModal() {
+      document.getElementById('addModal').classList.remove('open');
+    }
 
-      const name = document.getElementById('questionName')?.value;
-      const topic = document.getElementById('questionTopic')?.value;
-      const difficulty = document.getElementById('questionDifficulty')?.value;
+    function handleModalClick(e) {
+      if (e.target === document.getElementById('addModal')) closeModal();
+    }
 
-      if (!name || !topic || !difficulty) {
-        alert('Please fill all fields');
+    /* ============================================
+       NAVIGATION
+    ============================================ */
+    function setNav(el, view) {
+      document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+      el.classList.add('active');
+      const views = { problems: 'Problems', revisions: 'Revisions', bookmarks: 'Bookmarks', dashboard: 'Dashboard' };
+      if (view !== 'dashboard') {
+        showToast(views[view] + ' view coming soon!');
+        if (typeof loadDashboardData === 'function') loadDashboardData();
+      } else {
+        if (typeof loadDashboardData === 'function') loadDashboardData();
+      }
+    }
+
+    /* ============================================
+       LOGOUT
+    ============================================ */
+    function logout() {
+      localStorage.removeItem('token');
+      localStorage.removeItem('username');
+      window.location.href = 'login.html';
+    }
+
+    /* ============================================
+       DEMO DATA RENDER (fallback if dashboard.js not present)
+    ============================================ */
+    const DEMO = {
+      revisions: [
+        { name: 'Two Sum', topic: 'arrays', diff: 'easy' },
+        { name: 'Longest Substring', topic: 'strings', diff: 'medium' },
+        { name: 'Fibonacci', topic: 'dp', diff: 'easy' },
+        { name: 'Binary Search', topic: 'arrays', diff: 'medium' },
+      ],
+      difficulties: [
+        { label: 'Easy',   count: 5, total: 10, cls: 'easy' },
+        { label: 'Medium', count: 4, total: 10, cls: 'medium' },
+        { label: 'Hard',   count: 1, total: 10, cls: 'hard' },
+      ],
+      topics: [
+        { name: 'Arrays',  count: 5, max: 5 },
+        { name: 'Strings', count: 2, max: 5 },
+        { name: 'DP',      count: 2, max: 5 },
+        { name: 'Graphs',  count: 1, max: 5 },
+      ],
+      bookmarks: [
+        { name: 'Two Sum',           topic: 'arrays' },
+        { name: 'Longest Substring', topic: 'strings' },
+      ]
+    };
+
+    function renderRevisions(list) {
+      const el = document.getElementById('revisionList');
+      if (!el) return;
+      el.innerHTML = list.map(r => `
+        <div class="revision-row">
+          <div class="revision-info">
+            <span class="revision-name">${r.name}</span>
+            <span class="revision-topic">${r.topic}</span>
+          </div>
+          <span class="diff-badge ${r.diff}">${r.diff.toUpperCase()}</span>
+        </div>
+      `).join('');
+      const badge = document.getElementById('dueBadge');
+      if (badge) badge.textContent = list.length;
+    }
+
+    function renderDifficulty(data) {
+      const el = document.getElementById('diffBreakdown');
+      if (!el) return;
+      el.innerHTML = data.map(d => `
+        <div class="diff-row">
+          <div class="diff-circle ${d.cls}">${d.count}</div>
+          <div class="diff-bar-wrap">
+            <div class="diff-name">${d.label}</div>
+            <div class="diff-bar">
+              <div class="diff-fill ${d.cls}" style="width: 0%" data-pct="${Math.round(d.count/d.total*100)}%"></div>
+            </div>
+          </div>
+          <div class="diff-pct">${Math.round(d.count/d.total*100)}%</div>
+        </div>
+      `).join('');
+      // Animate bars
+      setTimeout(() => {
+        document.querySelectorAll('.diff-fill').forEach(b => {
+          b.style.width = b.dataset.pct;
+        });
+      }, 200);
+    }
+
+    function renderTopics(data) {
+      const el = document.getElementById('topicsList');
+      if (!el) return;
+      el.innerHTML = data.map(t => `
+        <div class="topic-row">
+          <span class="topic-name">${t.name}</span>
+          <div class="topic-bar">
+            <div class="topic-fill" style="width: 0%" data-w="${Math.round(t.count/t.max*100)}%"></div>
+          </div>
+          <span class="topic-count">${t.count}</span>
+        </div>
+      `).join('');
+      setTimeout(() => {
+        document.querySelectorAll('.topic-fill').forEach(b => {
+          b.style.width = b.dataset.w;
+        });
+      }, 200);
+    }
+
+    function renderBookmarks(data) {
+      const el = document.getElementById('bookmarksList');
+      if (!el) return;
+      el.innerHTML = data.map(b => `
+        <div class="bookmark-row">
+          <span class="bookmark-icon">🔖</span>
+          <span class="bookmark-name">${b.name}</span>
+          <span class="bookmark-tag">${b.topic}</span>
+        </div>
+      `).join('');
+    }
+
+    function initChart() {
+      const ctx = document.getElementById('progressChart');
+      if (!ctx) return;
+
+      // Destroy existing
+      if (window._chart) { window._chart.destroy(); }
+
+      const labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+      const data   = [1, 0, 2, 1, 3, 2, 1];
+
+      window._chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Problems Solved',
+            data,
+            backgroundColor: data.map((v, i) =>
+              i === data.indexOf(Math.max(...data))
+                ? 'rgba(74,222,128,0.7)'
+                : 'rgba(74,222,128,0.2)'
+            ),
+            borderColor: 'rgba(74,222,128,0.8)',
+            borderWidth: 1,
+            borderRadius: 6,
+            borderSkipped: false,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: 'rgba(12,14,22,0.95)',
+              borderColor: 'rgba(74,222,128,0.3)',
+              borderWidth: 1,
+              titleColor: '#4ade80',
+              bodyColor: '#8b9bbf',
+              titleFont: { family: 'JetBrains Mono', size: 11 },
+              bodyFont:  { family: 'JetBrains Mono', size: 11 },
+              padding: 10,
+              cornerRadius: 8,
+            }
+          },
+          scales: {
+            x: {
+              grid: { display: false },
+              ticks: { color: '#4a566e', font: { family: 'JetBrains Mono', size: 10 } },
+              border: { display: false }
+            },
+            y: {
+              grid: { color: 'rgba(255,255,255,0.04)' },
+              ticks: { color: '#4a566e', font: { family: 'JetBrains Mono', size: 10 }, stepSize: 1 },
+              border: { display: false },
+              min: 0,
+            }
+          }
+        }
+      });
+    }
+
+    /* ============================================
+       SEARCH FILTER
+    ============================================ */
+    function filterSearch() {
+      const q = document.getElementById('searchInput').value.toLowerCase();
+      document.querySelectorAll('.revision-row').forEach(row => {
+        const name = row.querySelector('.revision-name')?.textContent.toLowerCase() || '';
+        row.style.display = name.includes(q) ? '' : 'none';
+      });
+    }
+
+    /* ============================================
+       ADD QUESTION (fallback)
+    ============================================ */
+    window.handleAddQuestion = window.handleAddQuestion || async function(e) {
+      e.preventDefault();
+      const name  = document.getElementById('questionName').value.trim();
+      const topic = document.getElementById('questionTopic').value.trim();
+      const diff  = document.getElementById('questionDifficulty').value;
+
+      if (!name || !topic || !diff) { showToast('Please fill all fields.', true); return; }
+
+      const token    = localStorage.getItem('token');
+      const username = localStorage.getItem('username');
+
+      if (!token || !username) {
+        showToast('Session expired. Redirecting...', true);
+        setTimeout(() => window.location.href = 'login.html', 1500);
         return;
       }
 
-      console.log('Adding question:', { name, topic, difficulty });
+      const API = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        ? 'http://localhost:5000/api' : '/api';
 
       try {
-        // Use same API logic as dashboard.js
-        const API_URL = window.location.hostname === 'localhost'
-          ? `${window.location.protocol}//${window.location.hostname}:5000/api`
-          : `${window.location.protocol}//${window.location.hostname}/api`;
-
-        const response = await fetch(`${API_URL}/questions`, {
+        const res  = await fetch(`${API}/questions`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            username: 'vaishnavi',
-            name,
-            topic,
-            difficulty
-          })
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ username, name, topic, difficulty: diff })
         });
-
-        const data = await response.json();
+        const data = await res.json();
 
         if (data.success) {
-          alert('Question added with revision schedule!');
-          closeAddModal();
-          // Clear form
-          document.getElementById('questionName').value = '';
+          showToast('Problem added with revision schedule!');
+          closeModal();
+          document.getElementById('questionName').value  = '';
           document.getElementById('questionTopic').value = '';
-          document.getElementById('questionDifficulty').value = 'easy';
-          // Reload data
-          if (typeof loadDashboardData === 'function') {
-            loadDashboardData();
-          } else {
-            location.reload();
-          }
+          document.getElementById('questionDifficulty').value = '';
+          if (typeof loadDashboardData === 'function') loadDashboardData();
         } else {
-          alert('Error: ' + data.message);
+          showToast(data.message || 'Error adding problem.', true);
         }
-      } catch (error) {
-        console.error('Error:', error);
-        alert('Error adding question. Please try again.');
+      } catch (err) {
+        showToast('Network error. Check your connection.', true);
       }
     };
+
+    /* ============================================
+       INIT (runs if dashboard.js not present)
+    ============================================ */
+    window.addEventListener('load', () => {
+      // Populate demo data only if dashboard.js didn't already populate
+      setTimeout(() => {
+        if (!document.getElementById('revisionList').children.length) {
+          renderRevisions(DEMO.revisions);
+        }
+        if (!document.getElementById('diffBreakdown').children.length) {
+          renderDifficulty(DEMO.difficulties);
+        }
+        if (!document.getElementById('topicsList').children.length) {
+          renderTopics(DEMO.topics);
+        }
+        if (!document.getElementById('bookmarksList').children.length) {
+          renderBookmarks(DEMO.bookmarks);
+        }
+        initChart();
+      }, 100);
+
+      // Update username from localStorage
+      const uname = localStorage.getItem('username');
+      if (uname) {
+        const n = document.getElementById('sidebarName');
+        const a = document.getElementById('sidebarAvatar');
+        if (n) n.textContent = uname;
+        if (a) a.textContent = uname.slice(0,2).toUpperCase();
+      }
+
+      // Expose initProgressChart for dashboard.js compatibility
+      window.initProgressChart = initChart;
+    });
   </script>
 </body>
 </html>

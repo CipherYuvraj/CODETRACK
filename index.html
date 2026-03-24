@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CodeTrack - Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+
+  <style>
+    * { transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease; }
+
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.3); }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .animate-fade { animation: fadeIn 0.5s ease-out forwards; opacity: 0; }
+    .animate-fade-1 { animation-delay: 0.1s; }
+    .animate-fade-2 { animation-delay: 0.2s; }
+    .animate-fade-3 { animation-delay: 0.3s; }
+    .animate-fade-4 { animation-delay: 0.4s; }
+
+    /* Loading spinner */
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .spinner { animation: spin 1s linear infinite; }
+  </style>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            dark: {
+              bg: '#000000',
+              surface: '#0a0a0a',
+              card: '#121212',
+              border: '#1f1f1f',
+              text: '#ffffff',
+              muted: '#888888'
+            }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+
+<body class="bg-white dark:bg-black text-black dark:text-white min-h-screen">
+
+  <!-- Loading Overlay -->
+  <div id="loadingOverlay" class="hidden fixed inset-0 bg-black/50 dark:bg-white/10 backdrop-blur-sm z-50 flex items-center justify-center">
+    <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-2xl p-8 shadow-2xl">
+      <div class="flex items-center gap-4">
+        <div class="w-8 h-8 border-4 border-black dark:border-white border-t-transparent dark:border-t-transparent rounded-full spinner"></div>
+        <span class="text-lg font-semibold">Loading...</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Container -->
+  <div class="flex min-h-screen">
+
+    <!-- Sidebar -->
+    <aside class="w-64 border-r border-gray-200 dark:border-dark-border bg-gray-50 dark:bg-dark-surface shrink-0 overflow-y-auto animate-fade">
+
+      <!-- Logo -->
+      <div class="p-6 border-b border-gray-200 dark:border-dark-border">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-black dark:bg-white rounded-xl flex items-center justify-center">
+            <span class="text-white dark:text-black font-bold text-lg">CT</span>
+          </div>
+          <h1 class="text-xl font-bold">CodeTrack</h1>
+        </div>
+      </div>
+
+      <!-- Profile -->
+      <div class="p-6 border-b border-gray-200 dark:border-dark-border animate-fade-1">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 bg-black dark:bg-white rounded-full flex items-center justify-center shrink-0">
+            <span class="text-white dark:text-black font-bold" id="avatarInitials">JD</span>
+          </div>
+          <div class="min-w-0 flex-1">
+            <p class="font-semibold truncate" id="profileName">John Doe</p>
+            <p class="text-sm text-gray-500 dark:text-dark-muted truncate" id="profileUsername">@johndoe</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Navigation -->
+      <nav class="p-4 space-y-1 animate-fade-2">
+        <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-black dark:bg-white text-white dark:text-black font-medium">
+          <span>📊</span>
+          <span>Dashboard</span>
+        </a>
+        <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-gray-200 dark:hover:bg-dark-card font-medium">
+          <span>📝</span>
+          <span>Problems</span>
+        </a>
+        <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-gray-200 dark:hover:bg-dark-card font-medium">
+          <span>🔄</span>
+          <span>Revisions</span>
+        </a>
+        <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-gray-200 dark:hover:bg-dark-card font-medium">
+          <span>🔖</span>
+          <span>Bookmarks</span>
+        </a>
+      </nav>
+
+      <!-- Quick Stats -->
+      <div class="p-6 border-t border-gray-200 dark:border-dark-border mt-auto animate-fade-3">
+        <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-dark-muted mb-3">Quick Stats</p>
+        <div class="space-y-3">
+          <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-xl p-4">
+            <p class="text-xs text-gray-500 dark:text-dark-muted mb-1">Solved</p>
+            <p class="text-2xl font-bold" id="sidebarSolved">0</p>
+          </div>
+          <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-xl p-4">
+            <p class="text-xs text-gray-500 dark:text-dark-muted mb-1">Streak</p>
+            <p class="text-2xl font-bold" id="sidebarStreak">0 🔥</p>
+          </div>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-y-auto bg-white dark:bg-black">
+
+      <!-- Header with Theme Toggle -->
+      <header class="sticky top-0 bg-white/80 dark:bg-black/80 backdrop-blur-xl border-b border-gray-200 dark:border-dark-border px-8 py-6 z-40 animate-fade-1">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-3xl font-bold" id="headerGreeting">Welcome! 👋</h2>
+            <p class="text-gray-500 dark:text-dark-muted mt-1">Track your DSA progress</p>
+          </div>
+
+          <!-- Theme Toggle Button -->
+          <button onclick="toggleTheme()" class="relative w-16 h-8 bg-gray-300 dark:bg-gray-700 rounded-full border-2 border-gray-400 dark:border-gray-600 hover:border-black dark:hover:border-white transition-all focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white">
+            <div class="absolute inset-y-0 left-1 flex items-center">
+              <span class="text-xs">☀️</span>
+            </div>
+            <div class="absolute inset-y-0 right-1 flex items-center">
+              <span class="text-xs">🌙</span>
+            </div>
+            <div id="themeToggleCircle" class="absolute top-0.5 left-0.5 w-6 h-6 bg-white dark:bg-gray-900 rounded-full shadow-md transition-transform duration-300"></div>
+          </button>
+        </div>
+      </header>
+
+      <!-- Content -->
+      <div class="p-8 space-y-8">
+
+        <!-- Top Metrics -->
+        <section class="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fade-2">
+
+          <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-2xl p-6 hover:shadow-xl hover:border-black dark:hover:border-white transition-all">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-3xl">📚</span>
+              <span class="text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-dark-muted">Total Solved</span>
+            </div>
+            <p class="text-5xl font-bold mt-4" id="totalSolved">0</p>
+            <p class="text-sm text-gray-500 dark:text-dark-muted mt-2">Problems completed</p>
+          </div>
+
+          <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-2xl p-6 hover:shadow-xl hover:border-black dark:hover:border-white transition-all">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-3xl">🔥</span>
+              <span class="text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-dark-muted">Streak</span>
+            </div>
+            <p class="text-5xl font-bold mt-4" id="streakDays">0</p>
+            <p class="text-sm text-gray-500 dark:text-dark-muted mt-2">Days active</p>
+          </div>
+
+          <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-2xl p-6 hover:shadow-xl hover:border-black dark:hover:border-white transition-all">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-3xl">🏆</span>
+              <span class="text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-dark-muted">Revisions</span>
+            </div>
+            <p class="text-5xl font-bold mt-4" id="revisionPercent">0%</p>
+            <p class="text-sm text-gray-500 dark:text-dark-muted mt-2" id="revisionPending">0 pending</p>
+          </div>
+
+        </section>
+
+        <!-- Chart Section -->
+        <section class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-2xl p-6 hover:shadow-xl hover:border-black dark:hover:border-white transition-all animate-fade-3">
+          <h3 class="text-xl font-bold mb-6">📈 Progress Over Time</h3>
+          <div class="h-64">
+            <canvas id="progressChart"></canvas>
+          </div>
+        </section>
+
+        <!-- Grid: Difficulty & Revisions -->
+        <section class="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fade-4">
+
+          <!-- Difficulty Breakdown -->
+          <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-2xl p-6 hover:shadow-xl hover:border-black dark:hover:border-white transition-all">
+            <h3 class="text-xl font-bold mb-6">📊 By Difficulty</h3>
+            <div class="space-y-4">
+
+              <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-green-100 dark:bg-green-900/20 rounded-xl flex items-center justify-center shrink-0">
+                  <span class="text-xl">✓</span>
+                </div>
+                <div class="flex-1">
+                  <div class="flex justify-between mb-2">
+                    <span class="font-semibold">Easy</span>
+                    <span class="font-bold" id="easyCount">0</span>
+                  </div>
+                  <div class="h-2 bg-gray-200 dark:bg-dark-border rounded-full overflow-hidden">
+                    <div class="h-full bg-green-500" id="easyBar" style="width: 0%"></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-yellow-100 dark:bg-yellow-900/20 rounded-xl flex items-center justify-center shrink-0">
+                  <span class="text-xl">→</span>
+                </div>
+                <div class="flex-1">
+                  <div class="flex justify-between mb-2">
+                    <span class="font-semibold">Medium</span>
+                    <span class="font-bold" id="mediumCount">0</span>
+                  </div>
+                  <div class="h-2 bg-gray-200 dark:bg-dark-border rounded-full overflow-hidden">
+                    <div class="h-full bg-yellow-500" id="mediumBar" style="width: 0%"></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-red-100 dark:bg-red-900/20 rounded-xl flex items-center justify-center shrink-0">
+                  <span class="text-xl">!</span>
+                </div>
+                <div class="flex-1">
+                  <div class="flex justify-between mb-2">
+                    <span class="font-semibold">Hard</span>
+                    <span class="font-bold" id="hardCount">0</span>
+                  </div>
+                  <div class="h-2 bg-gray-200 dark:bg-dark-border rounded-full overflow-hidden">
+                    <div class="h-full bg-red-500" id="hardBar" style="width: 0%"></div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Revisions -->
+          <div class="space-y-4">
+
+            <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-2xl p-6 hover:shadow-xl hover:border-red-500 transition-all">
+              <h3 class="font-bold mb-3 flex items-center gap-2">
+                <span class="w-2 h-2 bg-red-500 rounded-full"></span>
+                <span id="dueTodayTitle">Due Today (0)</span>
+              </h3>
+              <div id="dueTodayList" class="text-sm text-gray-600 dark:text-dark-muted space-y-1">
+                <p>No revisions due</p>
+              </div>
+            </div>
+
+            <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-2xl p-6 hover:shadow-xl hover:border-yellow-500 transition-all">
+              <h3 class="font-bold mb-3 flex items-center gap-2">
+                <span class="w-2 h-2 bg-yellow-500 rounded-full"></span>
+                <span id="upcomingTitle">Upcoming (0)</span>
+              </h3>
+              <p class="text-sm text-gray-600 dark:text-dark-muted">Next revision soon</p>
+            </div>
+
+            <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-2xl p-6 hover:shadow-xl hover:border-green-500 transition-all">
+              <h3 class="font-bold mb-3 flex items-center gap-2">
+                <span class="w-2 h-2 bg-green-500 rounded-full"></span>
+                <span id="completedTitle">Completed (0)</span>
+              </h3>
+              <p class="text-sm text-gray-600 dark:text-dark-muted">Great progress! 🎉</p>
+            </div>
+
+          </div>
+
+        </section>
+
+        <!-- Topics Progress -->
+        <section class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-2xl p-6 hover:shadow-xl hover:border-black dark:hover:border-white transition-all animate-fade-4">
+          <h3 class="text-xl font-bold mb-6">📚 Topic Progress</h3>
+          <div id="topicsContainer" class="space-y-4">
+            <p class="text-gray-500 dark:text-dark-muted">Loading topics...</p>
+          </div>
+        </section>
+
+      </div>
+
+    </main>
+
+  </div>
+
+  <!-- Scripts -->
+  <script src="api.js"></script>
+  <script src="ui-updater.js"></script>
+  <script src="app.js"></script>
+
+  <script>
+    // Theme Toggle
+    function toggleTheme() {
+      const html = document.documentElement;
+      const circle = document.getElementById('themeToggleCircle');
+
+      if (html.classList.contains('dark')) {
+        html.classList.remove('dark');
+        circle.classList.remove('translate-x-8');
+        localStorage.setItem('theme', 'light');
+      } else {
+        html.classList.add('dark');
+        circle.classList.add('translate-x-8');
+        localStorage.setItem('theme', 'dark');
+      }
+    }
+
+    // Initialize theme on load
+    function initTheme() {
+      const saved = localStorage.getItem('theme');
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const circle = document.getElementById('themeToggleCircle');
+
+      if (saved === 'dark' || (!saved && prefersDark)) {
+        document.documentElement.classList.add('dark');
+        circle?.classList.add('translate-x-8');
+      }
+    }
+
+    // Initialize chart
+    function initChart() {
+      const canvas = document.getElementById('progressChart');
+      if (!canvas) return;
+
+      const ctx = canvas.getContext('2d');
+      const isDark = document.documentElement.classList.contains('dark');
+
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5', 'Week 6', 'Week 7', 'Week 8'],
+          datasets: [{
+            label: 'Problems Solved',
+            data: [5, 12, 18, 25, 32, 40, 48, 56],
+            borderColor: isDark ? '#ffffff' : '#000000',
+            backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.4,
+            pointRadius: 4,
+            pointBackgroundColor: isDark ? '#ffffff' : '#000000',
+            pointBorderColor: isDark ? '#000000' : '#ffffff',
+            pointBorderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: { color: isDark ? '#888888' : '#666666' },
+              grid: { color: isDark ? '#1f1f1f' : '#e5e5e5', drawBorder: false }
+            },
+            x: {
+              ticks: { color: isDark ? '#888888' : '#666666' },
+              grid: { color: isDark ? '#1f1f1f' : '#e5e5e5', drawBorder: false }
+            }
+          }
+        }
+      });
+    }
+
+    // Initialize on load
+    document.addEventListener('DOMContentLoaded', () => {
+      initTheme();
+      initChart();
+    });
+  </script>
+
+</body>
+</html>

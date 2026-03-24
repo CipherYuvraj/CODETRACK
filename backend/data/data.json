@@ -1,0 +1,61 @@
+{
+  "users": [
+    {
+      "username": "demo_user",
+      "questions": [
+        {
+          "id": 1774285741980,
+          "name": "Two Sum",
+          "topic": "arrays",
+          "difficulty": "easy",
+          "solvedDate": "2026-03-23",
+          "revisionDates": {
+            "day3": "2026-03-26",
+            "day7": "2026-03-30",
+            "day15": "2026-04-07"
+          },
+          "revisionStatus": {
+            "day3": true,
+            "day7": false,
+            "day15": false
+          }
+        },
+        {
+          "id": 1774285754005,
+          "name": "Valid Parentheses",
+          "topic": "strings",
+          "difficulty": "easy",
+          "solvedDate": "2026-03-23",
+          "revisionDates": {
+            "day3": "2026-03-26",
+            "day7": "2026-03-30",
+            "day15": "2026-04-07"
+          },
+          "revisionStatus": {
+            "day3": false,
+            "day7": false,
+            "day15": false
+          }
+        },
+        {
+          "id": 1774285754051,
+          "name": "Merge K Sorted Lists",
+          "topic": "linked-list",
+          "difficulty": "hard",
+          "solvedDate": "2026-03-23",
+          "revisionDates": {
+            "day3": "2026-03-26",
+            "day7": "2026-03-30",
+            "day15": "2026-04-07"
+          },
+          "revisionStatus": {
+            "day3": false,
+            "day7": false,
+            "day15": false
+          }
+        }
+      ],
+      "createdAt": "2026-03-23T17:07:41.815Z"
+    }
+  ]
+}

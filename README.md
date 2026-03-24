@@ -20,7 +20,7 @@ A modern DSA (Data Structures & Algorithms) learning tracker with **spaced repet
 ```bash
 npm install
 npm start
-# Open dashboard-modern.html in browser
+# Visit the deployed URL or open dashboard-modern.html locally
 ```
 
 ## 🎯 Perfect for Hackathons

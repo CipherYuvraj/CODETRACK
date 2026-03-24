@@ -3,9 +3,11 @@
 // Connected to JSON File Storage API
 // ================================
 
-// Dynamic API URL - works on any domain
-const API_URL = `${window.location.protocol}//${window.location.hostname}:5000/api`;
-const USERNAME = 'demo_user';  // Change this to your username
+// Dynamic API URL - works locally and on deployment
+const API_URL = window.location.hostname === 'localhost'
+  ? `${window.location.protocol}//${window.location.hostname}:5000/api`
+  : `${window.location.protocol}//${window.location.hostname}/api`;
+const USERNAME = 'vaishnavi';  // ← Change this to your name!
 
 console.log('Dashboard loaded successfully!');
 console.log('API URL:', API_URL);
